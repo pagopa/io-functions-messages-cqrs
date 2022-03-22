@@ -25,11 +25,14 @@ export const IConfig = t.interface({
   COSMOSDB_NAME: NonEmptyString,
   COSMOSDB_URI: NonEmptyString,
 
+  ERRORS_MESSAGE_VIEW_QUEUE_NAME: NonEmptyString,
+  ERRORS_QUEUE_STORAGE_CONNECTION: NonEmptyString,
+
   MESSAGE_CONTENT_STORAGE_CONNECTION: NonEmptyString,
 
-  MESSAGE_VIEW_ERROR_STORAGE_ACCOUNT: NonEmptyString,
-  MESSAGE_VIEW_ERROR_STORAGE_KEY: NonEmptyString,
-  MESSAGE_VIEW_ERROR_STORAGE_TABLE: NonEmptyString,
+  // MESSAGE_VIEW_ERROR_STORAGE_ACCOUNT: NonEmptyString,
+  // MESSAGE_VIEW_ERROR_STORAGE_KEY: NonEmptyString,
+  // MESSAGE_VIEW_ERROR_STORAGE_TABLE: NonEmptyString,
 
   QueueStorageConnection: NonEmptyString,
 

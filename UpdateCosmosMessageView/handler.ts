@@ -3,7 +3,6 @@ import {
   MessageView,
   MessageViewModel
 } from "@pagopa/io-functions-commons/dist/src/models/message_view";
-import { TableClient, TableInsertEntityHeaders } from "@azure/data-tables";
 import { RetrievedMessageStatus } from "@pagopa/io-functions-commons/dist/src/models/message_status";
 import { pipe, identity, flow } from "fp-ts/lib/function";
 import * as E from "fp-ts/Either";
@@ -14,6 +13,7 @@ import { FiscalCode } from "@pagopa/ts-commons/lib/strings";
 import { CosmosErrors } from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model";
 import { BlobService } from "azure-storage";
 import { readableReport } from "@pagopa/ts-commons/lib/reporters";
+import { QueueClient, QueueSendMessageResponse } from "@azure/storage-queue";
 import { TelemetryClient } from "../utils/appinsights";
 
 export const RetrievedMessageStatusWithFiscalCode = t.intersection([
@@ -29,19 +29,11 @@ interface IStorableError<T> extends Error {
   readonly retriable: boolean;
 }
 
-export const storeError = (errorStorage: TableClient) => (
+export const storeError = (queueClient: QueueClient) => (
   storableError: IStorableError<unknown>
-): TE.TaskEither<Error, TableInsertEntityHeaders> =>
+): TE.TaskEither<Error, QueueSendMessageResponse> =>
   TE.tryCatch(
-    () =>
-      errorStorage.createEntity({
-        body: `${JSON.stringify(storableError.body)}`,
-        message: storableError.message,
-        name: storableError.name,
-        partitionKey: `${new Date().getMonth() + 1}`,
-        retriable: storableError.retriable,
-        rowKey: `${Date.now()}`
-      }),
+    () => queueClient.sendMessage(JSON.stringify(storableError)),
     E.toError
   );
 
@@ -79,12 +71,12 @@ export const toStorableError = <T>(body: T) => (
 });
 
 export const storeAndLogError = <T>(
-  errorStorage: TableClient,
+  queueClient: QueueClient,
   telemetryClient: TelemetryClient
 ) => (processingError: IStorableError<T>): TE.TaskEither<void, void> =>
   pipe(
     processingError,
-    storeError(errorStorage),
+    storeError(queueClient),
     TE.mapLeft(storingError =>
       telemetryClient.trackEvent({
         name: "trigger.elt.updatemessageview.failedwithoutstoringerror",
@@ -107,12 +99,12 @@ export const storeAndLogError = <T>(
   );
 
 export const storeAndLogErrorFirst = <T>(
-  errorStorage: TableClient,
+  queueClient: QueueClient,
   telemetryClient: TelemetryClient
 ) => (error: IStorableError<T>): TE.TaskEither<IStorableError<T>, void> =>
   pipe(
     error,
-    storeAndLogError(errorStorage, telemetryClient),
+    storeAndLogError(queueClient, telemetryClient),
     TE.mapLeft(() => error)
   );
 
@@ -209,7 +201,7 @@ export const handle = (
   telemetryClient: TelemetryClient,
   messageViewModel: MessageViewModel,
   messageModel: MessageModel,
-  errorStorage: TableClient,
+  queueClient: QueueClient,
   blobService: BlobService,
   rawMessageStatus: unknown
 ): Promise<IStorableError<unknown> | MessageView> =>
@@ -219,6 +211,6 @@ export const handle = (
     TE.fromEither,
     TE.chain(handleStatusChange(messageViewModel, messageModel, blobService)),
     TE.mapLeft(toStorableError(rawMessageStatus)),
-    TE.orElseFirst(storeAndLogErrorFirst(errorStorage, telemetryClient)),
+    TE.orElseFirst(storeAndLogErrorFirst(queueClient, telemetryClient)),
     TE.toUnion
   )();

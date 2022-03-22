@@ -118,8 +118,8 @@ const mockAppinsights = {
   trackEvent: jest.fn()
 };
 
-const mockTableStorage = {
-  createEntity: jest.fn()
+const mockQueueClient = {
+  sendMessage: jest.fn()
 };
 
 const mockMessageViewModel = {
@@ -194,19 +194,19 @@ describe("toStorableError", () => {
 
 describe("storeAndLogError", () => {
   it("GIVEN a working table storage client WHEN an error is stored THEN a new entity in the table is created and an event is tracked", async () => {
-    mockTableStorage.createEntity.mockImplementationOnce(() =>
+    mockQueueClient.sendMessage.mockImplementationOnce(() =>
       Promise.resolve(true)
     );
     const result = await storeAndLogError(
-      mockTableStorage as any,
+      mockQueueClient as any,
       mockAppinsights as any
     )(dummyStorableError)();
 
     expect(E.isRight(result)).toBeTruthy();
-    expect(mockTableStorage.createEntity).toBeCalledWith(
-      expect.objectContaining({
+    expect(mockQueueClient.sendMessage).toBeCalledWith(
+      JSON.stringify({
         ...dummyStorableError,
-        body: JSON.stringify(dummyStorableError.body)
+        body: dummyStorableError.body
       })
     );
     expect(mockAppinsights.trackEvent).toBeCalledWith(
@@ -215,19 +215,19 @@ describe("storeAndLogError", () => {
   });
 
   it("GIVEN a not wroking table storage client WHEN an error is stored THEN no entities are created and an event is tracked", async () => {
-    mockTableStorage.createEntity.mockImplementationOnce(() =>
+    mockQueueClient.sendMessage.mockImplementationOnce(() =>
       Promise.reject(new Error("createEntity failed"))
     );
     const result = await storeAndLogError(
-      mockTableStorage as any,
+      mockQueueClient as any,
       mockAppinsights as any
     )(dummyStorableError)();
 
     expect(E.isLeft(result)).toBeTruthy();
-    expect(mockTableStorage.createEntity).toBeCalledWith(
-      expect.objectContaining({
+    expect(mockQueueClient.sendMessage).toBeCalledWith(
+      JSON.stringify({
         ...dummyStorableError,
-        body: JSON.stringify(dummyStorableError.body)
+        body: dummyStorableError.body
       })
     );
     expect(mockAppinsights.trackEvent).toBeCalledWith(

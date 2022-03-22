@@ -1,7 +1,6 @@
 import { createBlobService } from "azure-storage";
 
 import { Context } from "@azure/functions";
-import { TableClient, AzureNamedKeyCredential } from "@azure/data-tables";
 
 import { NonEmptyString } from "@pagopa/ts-commons/lib/strings";
 import {
@@ -13,6 +12,7 @@ import {
   MessageViewModel,
   MessageView
 } from "@pagopa/io-functions-commons/dist/src/models/message_view";
+import { QueueClient } from "@azure/storage-queue";
 import { getConfigOrThrow } from "../utils/config";
 import { cosmosdbInstance } from "../utils/cosmosdb";
 import { initTelemetryClient } from "../utils/appinsights";
@@ -33,13 +33,9 @@ const messageContentBlobService = createBlobService(
   config.MESSAGE_CONTENT_STORAGE_CONNECTION
 );
 
-const errorStorage = new TableClient(
-  `https://${config.MESSAGE_VIEW_ERROR_STORAGE_ACCOUNT}.table.core.windows.net`,
-  config.MESSAGE_VIEW_ERROR_STORAGE_TABLE,
-  new AzureNamedKeyCredential(
-    config.MESSAGE_VIEW_ERROR_STORAGE_ACCOUNT,
-    config.MESSAGE_VIEW_ERROR_STORAGE_KEY
-  )
+const queueClient = new QueueClient(
+  config.ERRORS_QUEUE_STORAGE_CONNECTION,
+  config.ERRORS_MESSAGE_VIEW_QUEUE_NAME
 );
 
 const telemetryClient = initTelemetryClient(
@@ -54,7 +50,7 @@ const run = async (
     telemetryClient,
     messageViewModel,
     messageModel,
-    errorStorage,
+    queueClient,
     messageContentBlobService,
     rawMessageStatus
   );
