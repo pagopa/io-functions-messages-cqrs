@@ -210,7 +210,9 @@ describe("storeAndLogError", () => {
       })
     );
     expect(mockAppinsights.trackEvent).toBeCalledWith(
-      expect.objectContaining({ name: "trigger.elt.updatemessageview.failed" })
+      expect.objectContaining({
+        name: "trigger.messages.cqrs.updatemessageview.failed"
+      })
     );
   });
 
@@ -232,7 +234,8 @@ describe("storeAndLogError", () => {
     );
     expect(mockAppinsights.trackEvent).toBeCalledWith(
       expect.objectContaining({
-        name: "trigger.elt.updatemessageview.failedwithoutstoringerror"
+        name:
+          "trigger.messages.cqrs.updatemessageview.failedwithoutstoringerror"
       })
     );
   });
