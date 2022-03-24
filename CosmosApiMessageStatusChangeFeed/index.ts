@@ -4,7 +4,6 @@ import { AzureContextTransport } from "@pagopa/io-functions-commons/dist/src/uti
 import { RetrievedMessageStatus } from "@pagopa/io-functions-commons/dist/src/models/message_status";
 import { pipe } from "fp-ts/lib/function";
 import * as RA from "fp-ts/ReadonlyArray";
-import * as E from "fp-ts/Either";
 
 // eslint-disable-next-line functional/no-let
 let logger: Context["log"] | undefined;
@@ -18,17 +17,12 @@ const run = async (
   rawMessageStatus: ReadonlyArray<unknown>
 ): Promise<void> => {
   logger = context.log;
-  pipe(
+  // eslint-disable-next-line functional/immutable-data
+  context.bindings.outputMessageStatus = pipe(
     rawMessageStatus,
-    RA.map(raw =>
-      pipe(
-        raw,
-        RetrievedMessageStatus.decode,
-        E.map(messageStatus =>
-          context.bindings.outputEventHubMessage.push(messageStatus)
-        )
-      )
-    )
+    RA.map(RetrievedMessageStatus.decode),
+    RA.rights,
+    RA.map(JSON.stringify)
   );
   context.done();
 };

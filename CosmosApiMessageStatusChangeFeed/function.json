@@ -3,11 +3,11 @@
     {
       "authLevel": "function",
       "type": "cosmosDBTrigger",
-      "name": "cosmosApiProfilesTrigger",
+      "name": "cosmosApiMessageStatusTrigger",
       "direction": "in",
       "connectionStringSetting": "COSMOSDB_CONNECTION_STRING",
       "databaseName": "%COSMOSDB_NAME%",
-      "collectionName": "message_status",
+      "collectionName": "message-status",
       "leaseCollectionName": "cqrs-leases",
       "leaseCollectionPrefix": "CosmosApiMessageStatusChangeFeed",
       "createLeaseCollectionIfNotExists": true,
@@ -16,7 +16,7 @@
     {
       "type": "eventHub",
       "name": "outputMessageStatus",
-      "eventHubName": "%MESSAGE_STATUS_TOPIC_NAME",
+      "eventHubName": "%MESSAGE_STATUS_TOPIC_NAME%",
       "connection": "MESSAGE_STAUTS_TOPIC_CONNECTION_STRING",
       "direction": "out"
   }
