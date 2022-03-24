@@ -30,9 +30,9 @@ export const IConfig = t.interface({
 
   MESSAGE_CONTENT_STORAGE_CONNECTION: NonEmptyString,
 
-  // MESSAGE_VIEW_ERROR_STORAGE_ACCOUNT: NonEmptyString,
-  // MESSAGE_VIEW_ERROR_STORAGE_KEY: NonEmptyString,
-  // MESSAGE_VIEW_ERROR_STORAGE_TABLE: NonEmptyString,
+  MESSAGE_VIEW_CONSUMER_GROUP: NonEmptyString,
+  MESSAGE_VIEW_TOPIC_CONNECTION_STRING: NonEmptyString,
+  MESSAGE_VIEW_TOPIC_NAME: NonEmptyString,
 
   QueueStorageConnection: NonEmptyString,
 
