@@ -124,7 +124,8 @@ export const handleStatusChange = (
           archived: messageStatus.isArchived,
           processing: messageStatus.status,
           read: messageStatus.isRead
-        }
+        },
+        version: messageStatus.version
       }
     ),
     TE.orElse(

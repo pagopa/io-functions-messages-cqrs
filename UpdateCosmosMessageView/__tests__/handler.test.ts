@@ -256,7 +256,8 @@ describe("handleStatusChange", () => {
           archived: aMessageStatus.isArchived,
           processing: aMessageStatus.status,
           read: aMessageStatus.isRead
-        }
+        },
+        version: aMessageStatus.version
       }
     );
   });
