@@ -1,0 +1,17 @@
+{
+  "bindings": [
+    {
+      "type": "queueTrigger",
+      "direction": "in",
+      "name": "messageviewfailure",
+      "queueName": "messageviewfailures",
+      "connection":"QueueStorageConnection"
+    },
+    {
+      "name": "starter",
+      "type": "durableClient",
+      "direction": "in"
+    }
+  ],
+  "scriptFile": "../dist/HandleMessageViewFailures/index.js"
+}
