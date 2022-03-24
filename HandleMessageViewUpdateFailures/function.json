@@ -4,8 +4,8 @@
       "type": "queueTrigger",
       "direction": "in",
       "name": "messageviewfailure",
-      "queueName": "messageviewfailures",
-      "connection":"QueueStorageConnection"
+      "queueName": "%MESSAGE_VIEW_UPDATE_FAILURE_QUEUE_NAME%",
+      "connection":"%MESSAGE_VIEW_UPDATE_FAILURE_CONNECTION%"
     },
     {
       "name": "starter",
@@ -13,5 +13,5 @@
       "direction": "in"
     }
   ],
-  "scriptFile": "../dist/HandleMessageViewFailures/index.js"
+  "scriptFile": "../dist/HandleMessageViewUpdateFailures/index.js"
 }

@@ -1,18 +1,8 @@
-import {
-  CosmosEmptyResponse,
-  CosmosDecodingError,
-  CosmosErrorResponse
-} from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model";
-import {
-  toStorableError,
-  storeAndLogError,
-  handleStatusChange,
-  RetrievedMessageStatusWithFiscalCode
-} from "../handler";
+import { CosmosErrorResponse } from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model";
+import { storeAndLogError } from "../handler";
 import * as t from "io-ts";
 import * as E from "fp-ts/Either";
 import * as TE from "fp-ts/TaskEither";
-import { pipe } from "fp-ts/lib/function";
 import * as O from "fp-ts/lib/Option";
 import { NonEmptyString, FiscalCode } from "@pagopa/ts-commons/lib/strings";
 import { ServiceId } from "@pagopa/io-functions-commons/dist/generated/definitions/ServiceId";
@@ -25,6 +15,10 @@ import {
   MessageView,
   Status
 } from "@pagopa/io-functions-commons/dist/src/models/message_view";
+import {
+  handleStatusChange,
+  RetrievedMessageStatusWithFiscalCode
+} from "../../utils/message_view";
 
 const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
 const aMessageId = "A_MESSAGE_ID" as NonEmptyString;
@@ -142,54 +136,6 @@ const mockBlobService = {
 
 beforeEach(() => {
   jest.clearAllMocks();
-});
-
-describe("toStorableError", () => {
-  it("GIVEN an Error WHEN toStorableError is called THEN a storable error is returend", async () => {
-    const result = toStorableError(dummyDocument)(new Error("error message"));
-    expect(result).toEqual(dummyStorableError);
-  });
-
-  it("GIVEN an CosmosEmptyError WHEN toStorableError is called THEN a storable error is returend", async () => {
-    const result = toStorableError({})(CosmosEmptyResponse);
-    expect(result.message).toEqual("Empty cosmos error message");
-    expect(result.retriable).toBeTruthy();
-  });
-
-  it("GIVEN an CosmosErrorResponse WHEN toStorableError is called THEN a storable error is returend", async () => {
-    const result = toStorableError({})(dummyCosmosErrorResponse);
-    expect(result.message).toEqual(
-      JSON.stringify(dummyCosmosErrorResponse.error)
-    );
-    expect(result.retriable).toBeTruthy();
-  });
-
-  it("GIVEN an CosmosDecodingError WHEN toStorableError is called THEN a storable error is returend", async () => {
-    pipe(
-      MyValue.decode({}),
-      E.mapLeft(CosmosDecodingError),
-      E.mapLeft(toStorableError({})),
-      E.mapLeft(result => {
-        expect(result.message).toEqual(
-          "value [undefined] at [root.test] is not a valid [string]"
-        );
-        expect(result.retriable).toBeFalsy();
-      })
-    );
-  });
-
-  it("GIVEN an t.Errors WHEN toStorableError is called THEN a storable error is returend", async () => {
-    pipe(
-      MyValue.decode({}),
-      E.mapLeft(toStorableError({})),
-      E.mapLeft(result => {
-        expect(result.message).toEqual(
-          "value [undefined] at [root.test] is not a valid [string]"
-        );
-        expect(result.retriable).toBeFalsy();
-      })
-    );
-  });
 });
 
 describe("storeAndLogError", () => {

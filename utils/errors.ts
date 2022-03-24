@@ -16,7 +16,10 @@ export const PermanentFailure = t.interface({
 });
 export type PermanentFailure = t.TypeOf<typeof PermanentFailure>;
 
-export const Failure = t.union([TransientFailure, PermanentFailure]);
+export const Failure = t.intersection([
+  t.union([TransientFailure, PermanentFailure]),
+  t.partial({ modelId: t.string })
+]);
 export type Failure = t.TypeOf<typeof Failure>;
 
 export const toTransientFailure = (
