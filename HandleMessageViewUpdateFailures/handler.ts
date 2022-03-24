@@ -201,7 +201,8 @@ export const HandleMessageViewUpdateFailureHandler = (
       )
     ),
     TE.mapLeft(err => {
-      const error = TransientFailure.is(err)
+      const isTransient = TransientFailure.is(err);
+      const error = isTransient
         ? `HandleMessageViewUpdateFailure|TRANSIENT_ERROR=${err.reason}`
         : `HandleMessageViewUpdateFailure|FATAL|PERMANENT_ERROR=${
             err.reason
@@ -214,10 +215,10 @@ export const HandleMessageViewUpdateFailureHandler = (
           isSuccess: "false",
           name: "message.view.update.retry.failure"
         },
-        tagOverrides: { samplingEnabled: "false" }
+        tagOverrides: { samplingEnabled: String(isTransient) }
       });
       context.log.error(error);
-      if (TransientFailure.is(err)) {
+      if (isTransient) {
         // Trigger a retry in case of temporary failures
         throw new Error(error);
       }
