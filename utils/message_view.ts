@@ -159,7 +159,9 @@ export const handleStatusChange = (
               has: messageWithContent.content.legal_data != null
             },
             payment: {
-              has: messageWithContent.content.payment_data != null
+              has: messageWithContent.content.payment_data != null,
+              notice_number:
+                messageWithContent.content.payment_data?.notice_number
             }
           },
           createdAt: messageWithContent.createdAt,
