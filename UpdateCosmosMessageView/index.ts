@@ -47,9 +47,9 @@ const run = async (
 ): Promise<IStorableError<unknown> | void> =>
   handle(
     telemetryClient,
+    queueClient,
     messageViewModel,
     messageModel,
-    queueClient,
     messageContentBlobService,
     rawMessageStatus
   );

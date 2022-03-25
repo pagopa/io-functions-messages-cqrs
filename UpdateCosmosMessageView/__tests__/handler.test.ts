@@ -1,68 +1,18 @@
-import { CosmosErrorResponse } from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model";
-import { storeAndLogError } from "../handler";
-import * as t from "io-ts";
+import { handle, storeAndLogError } from "../handler";
 import * as E from "fp-ts/Either";
 import * as TE from "fp-ts/TaskEither";
-import * as O from "fp-ts/lib/Option";
-import { NonEmptyString, FiscalCode } from "@pagopa/ts-commons/lib/strings";
-import { ServiceId } from "@pagopa/io-functions-commons/dist/generated/definitions/ServiceId";
-import { TimeToLiveSeconds } from "@pagopa/io-functions-commons/dist/generated/definitions/TimeToLiveSeconds";
+import * as mw from "../../utils/message_view";
+import { aMessageStatus } from "../../__mocks__/message";
+import {
+  toPermanentFailure,
+  toTransientFailure,
+  TransientFailure
+} from "../../utils/errors";
 import { MessageStatusValueEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/MessageStatusValue";
-import { NonNegativeInteger } from "@pagopa/ts-commons/lib/numbers";
-import { MessageContent } from "@pagopa/io-functions-commons/dist/generated/definitions/MessageContent";
-import {
-  Components,
-  MessageView,
-  Status
-} from "@pagopa/io-functions-commons/dist/src/models/message_view";
-import {
-  handleStatusChange,
-  RetrievedMessageStatusWithFiscalCode
-} from "../../utils/message_view";
-
-const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
-const aMessageId = "A_MESSAGE_ID" as NonEmptyString;
-
-const cosmosMetadata = {
-  _etag: "_etag",
-  _rid: "_rid",
-  _self: "_self",
-  _ts: 1
-};
-
-const aRetrievedMessageWithoutContent = {
-  ...cosmosMetadata,
-  fiscalCode: aFiscalCode,
-  id: aMessageId,
-  indexedId: "A_MESSAGE_ID" as NonEmptyString,
-  senderServiceId: "agid" as ServiceId,
-  senderUserId: "u123" as NonEmptyString,
-  timeToLiveSeconds: 3600 as TimeToLiveSeconds,
-  createdAt: new Date(),
-  kind: "INewMessageWithoutContent"
-};
-
-const aMessageBodyMarkdown = "test".repeat(80);
-const aMessageContent = E.getOrElseW(() => {
-  throw new Error();
-})(
-  MessageContent.decode({
-    markdown: aMessageBodyMarkdown,
-    subject: "test".repeat(10)
-  })
-);
-
-const MyValue = t.interface({ test: t.string });
 
 const dummyDocument = {
   test: "test value"
 };
-
-const dummyCosmosErrorResponse = CosmosErrorResponse({
-  code: 500,
-  message: "error message",
-  name: "error name"
-});
 
 const dummyStorableError = {
   name: "Storable Error",
@@ -71,74 +21,33 @@ const dummyStorableError = {
   retriable: true
 };
 
-const aMessageStatus: RetrievedMessageStatusWithFiscalCode = {
-  ...cosmosMetadata,
-  messageId: aMessageId,
-  id: `${aMessageId}-0` as NonEmptyString,
-  status: MessageStatusValueEnum.PROCESSED,
-  version: 0 as NonNegativeInteger,
-  updatedAt: new Date(),
-  fiscalCode: aFiscalCode,
-  isRead: false,
-  isArchived: false,
-  kind: "IRetrievedMessageStatus"
-};
-
-const aComponents: Components = {
-  attachments: { has: false },
-  euCovidCert: { has: false },
-  legalData: { has: false },
-  payment: { has: false }
-};
-
-const aStatus: Status = {
-  archived: false,
-  processing: MessageStatusValueEnum.PROCESSED,
-  read: false
-};
-
-const aMessageView: MessageView = {
-  components: aComponents,
-  createdAt: new Date(),
-  fiscalCode: aFiscalCode,
-  id: aMessageId,
-  messageTitle: "a-msg-title" as NonEmptyString,
-  senderServiceId: "a-service-id" as ServiceId,
-  status: aStatus,
-  version: 0 as NonNegativeInteger
-};
-
 const mockAppinsights = {
-  trackEvent: jest.fn()
+  trackEvent: jest.fn().mockReturnValue(void 0)
 };
 
 const mockQueueClient = {
-  sendMessage: jest.fn()
+  sendMessage: jest.fn().mockImplementation(() => Promise.resolve(void 0))
 };
 
-const mockMessageViewModel = {
-  patch: jest.fn(),
-  create: jest.fn()
-};
+const handleStatusChangeUtilityMock = jest
+  .fn()
+  .mockImplementation(() => TE.of(void 0));
+jest
+  .spyOn(mw, "handleStatusChange")
+  .mockImplementation(() => handleStatusChangeUtilityMock);
 
-const mockMessageModel = {
-  find: jest.fn(),
-  getContentFromBlob: jest.fn()
-};
+const anyParam = {} as any;
 
-const mockBlobService = {
-  getBlobAsText: jest
-    .fn()
-    .mockReturnValue(
-      Promise.resolve(E.right(O.some(JSON.stringify(aMessageContent))))
-    )
+const aTransientFailure: TransientFailure = {
+  kind: "TRANSIENT",
+  reason: "aReason"
 };
-
-beforeEach(() => {
-  jest.clearAllMocks();
-});
 
 describe("storeAndLogError", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it("GIVEN a working table storage client WHEN an error is stored THEN a new entity in the table is created and an event is tracked", async () => {
     mockQueueClient.sendMessage.mockImplementationOnce(() =>
       Promise.resolve(true)
@@ -187,198 +96,119 @@ describe("storeAndLogError", () => {
   });
 });
 
-describe("handleStatusChange", () => {
-  it("GIVEN a valid message_status WHEN the message_view already contains the message THEN the message_view is updated with status data from message_status", async () => {
-    mockMessageViewModel.patch.mockReturnValueOnce(TE.right(aMessageView));
-
-    const result = await handleStatusChange(
-      mockMessageViewModel as any,
-      mockMessageModel as any,
-      mockBlobService as any
-    )(aMessageStatus)();
-
-    expect(E.isRight(result)).toBeTruthy();
-    expect(mockMessageViewModel.patch).toBeCalledWith(
-      [aMessageId, aFiscalCode],
-      {
-        status: {
-          archived: aMessageStatus.isArchived,
-          processing: aMessageStatus.status,
-          read: aMessageStatus.isRead
-        },
-        version: aMessageStatus.version
-      },
-      expect.anything()
-    );
+describe("handle", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
-  it("GIVEN a valid message_status WHEN the message_view not contains the message THEN the message_status is enriched and a new message_view document is created", async () => {
-    mockMessageViewModel.patch.mockReturnValueOnce(
-      TE.left(
-        CosmosErrorResponse({ code: 404, name: "error", message: "error" })
-      )
-    );
-    mockMessageViewModel.create.mockReturnValueOnce(TE.right(aMessageView));
-    mockMessageModel.getContentFromBlob.mockReturnValueOnce(
-      TE.right(O.some(aMessageContent))
-    );
-    mockMessageModel.find.mockReturnValueOnce(
-      TE.right(O.some(aRetrievedMessageWithoutContent))
+  it("GIVEN a malformed messageStatus WHEN decoding input THEN it should return a not retriable Error", async () => {
+    const result = await handle(
+      mockAppinsights as any,
+      mockQueueClient as any,
+      anyParam,
+      anyParam,
+      anyParam,
+      { ...aMessageStatus, fiscalCode: undefined }
     );
 
-    const result = await handleStatusChange(
-      mockMessageViewModel as any,
-      mockMessageModel as any,
-      mockBlobService as any
-    )(aMessageStatus)();
-
-    expect(E.isRight(result)).toBeTruthy();
-    expect(mockMessageViewModel.patch).toBeCalledTimes(1);
-    expect(mockMessageModel.find).toBeCalledWith([aMessageId, aFiscalCode]);
-    expect(mockMessageViewModel.create).toBeCalledWith(
+    expect(mockQueueClient.sendMessage).toHaveBeenCalled();
+    expect(mockAppinsights.trackEvent).toHaveBeenCalled();
+    expect(mockAppinsights.trackEvent).toHaveBeenCalledWith(
       expect.objectContaining({
-        components: {
-          attachments: { has: false },
-          euCovidCert: { has: true },
-          legalData: { has: false },
-          payment: { has: false }
-        },
-        fiscalCode: aFiscalCode,
-        id: aMessageId,
-        messageTitle: "testtesttesttesttesttesttesttesttesttest",
-        senderServiceId: "agid",
-        status: { archived: false, processing: "PROCESSED", read: false },
-        timeToLive: 3600,
-        version: 0
+        name: "trigger.messages.cqrs.updatemessageview.failed"
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        body: { ...aMessageStatus, fiscalCode: undefined },
+        retriable: false
       })
     );
   });
 
-  it("GIVEN a valid message_status WHEN the message_view model is not working THEN a CosmosErrors is returned", async () => {
-    mockMessageViewModel.patch.mockReturnValueOnce(
-      TE.left(
-        CosmosErrorResponse({ code: 500, name: "error", message: "error" })
-      )
+  it("GIVEN a messageStatus WHEN handleStatusChange returns a transient failure THEN it should return a retriable Error", async () => {
+    handleStatusChangeUtilityMock.mockImplementationOnce(() =>
+      TE.left(aTransientFailure)
+    );
+    const result = await handle(
+      mockAppinsights as any,
+      mockQueueClient as any,
+      anyParam,
+      anyParam,
+      anyParam,
+      aMessageStatus
     );
 
-    const result = await handleStatusChange(
-      mockMessageViewModel as any,
-      mockMessageModel as any,
-      mockBlobService as any
-    )(aMessageStatus)();
-
-    expect(E.isLeft(result)).toBeTruthy();
-    if (E.isLeft(result)) {
-      expect(result.left).toEqual(
-        expect.objectContaining({ kind: "TRANSIENT" })
-      );
-    }
-    expect(mockMessageViewModel.patch).toBeCalledTimes(1);
-  });
-
-  it("GIVEN a valid message_status WHEN the message_view and the messages both not contains the message THEN an Error is returned", async () => {
-    mockMessageViewModel.patch.mockReturnValueOnce(
-      TE.left(
-        CosmosErrorResponse({ code: 404, name: "error", message: "error" })
-      )
-    );
-    mockMessageModel.find.mockReturnValueOnce(TE.right(O.none));
-
-    const result = await handleStatusChange(
-      mockMessageViewModel as any,
-      mockMessageModel as any,
-      mockBlobService as any
-    )(aMessageStatus)();
-
-    expect(E.isLeft(result)).toBeTruthy();
-    if (E.isLeft(result)) {
-      expect(result.left).toEqual(
-        expect.objectContaining({ kind: "TRANSIENT" })
-      );
-    }
-    expect(mockMessageViewModel.patch).toBeCalledTimes(1);
-    expect(mockMessageModel.find).toBeCalledWith([aMessageId, aFiscalCode]);
-  });
-
-  it("GIVEN a valid message_status WHEN the message_view and the message body both not contains the message THEN an Error is returned", async () => {
-    mockMessageViewModel.patch.mockReturnValueOnce(
-      TE.left(
-        CosmosErrorResponse({ code: 404, name: "error", message: "error" })
-      )
-    );
-    mockMessageModel.getContentFromBlob.mockReturnValueOnce(TE.right(O.none));
-    mockMessageModel.find.mockReturnValueOnce(
-      TE.right(O.some(aRetrievedMessageWithoutContent))
-    );
-
-    const result = await handleStatusChange(
-      mockMessageViewModel as any,
-      mockMessageModel as any,
-      mockBlobService as any
-    )(aMessageStatus)();
-
-    expect(E.isLeft(result)).toBeTruthy();
-    if (E.isLeft(result)) {
-      expect(result.left).toEqual(
-        expect.objectContaining({ kind: "TRANSIENT" })
-      );
-    }
-    expect(mockMessageViewModel.patch).toBeCalledTimes(1);
-    expect(mockMessageModel.find).toBeCalledWith([aMessageId, aFiscalCode]);
-    expect(mockMessageModel.getContentFromBlob).toBeCalledWith(
-      expect.anything(),
-      aMessageId
-    );
-  });
-
-  it("GIVEN a valid message_status WHEN the message_view not contains the message and the messages model do not work THEN an CosmosErrors is returned", async () => {
-    mockMessageViewModel.patch.mockReturnValueOnce(
-      TE.left(
-        CosmosErrorResponse({ code: 404, name: "error", message: "error" })
-      )
-    );
-    mockMessageViewModel.create.mockReturnValueOnce(
-      TE.left(
-        CosmosErrorResponse({ code: 500, name: "error", message: "error" })
-      )
-    );
-    mockMessageModel.getContentFromBlob.mockReturnValueOnce(
-      TE.right(O.some(aMessageContent))
-    );
-    mockMessageModel.find.mockReturnValueOnce(
-      TE.right(O.some(aRetrievedMessageWithoutContent))
-    );
-
-    const result = await handleStatusChange(
-      mockMessageViewModel as any,
-      mockMessageModel as any,
-      mockBlobService as any
-    )(aMessageStatus)();
-
-    expect(E.isLeft(result)).toBeTruthy();
-    if (E.isLeft(result)) {
-      expect(result.left).toEqual(
-        expect.objectContaining({ kind: "TRANSIENT" })
-      );
-    }
-    expect(mockMessageViewModel.patch).toBeCalledTimes(1);
-    expect(mockMessageModel.find).toBeCalledWith([aMessageId, aFiscalCode]);
-    expect(mockMessageViewModel.create).toBeCalledWith(
+    expect(mockQueueClient.sendMessage).toHaveBeenCalled();
+    expect(mockAppinsights.trackEvent).toHaveBeenCalled();
+    expect(mockAppinsights.trackEvent).toHaveBeenCalledWith(
       expect.objectContaining({
-        components: {
-          attachments: { has: false },
-          euCovidCert: { has: true },
-          legalData: { has: false },
-          payment: { has: false }
-        },
-        fiscalCode: aFiscalCode,
-        id: aMessageId,
-        messageTitle: "testtesttesttesttesttesttesttesttesttest",
-        senderServiceId: "agid",
-        status: { archived: false, processing: "PROCESSED", read: false },
-        timeToLive: 3600,
-        version: 0
+        name: "trigger.messages.cqrs.updatemessageview.failed"
       })
     );
+    expect(result).toEqual(
+      expect.objectContaining({
+        body: aMessageStatus,
+        retriable: true
+      })
+    );
+  });
+
+  it("GIVEN a messageStatus WHEN handleStatusChange returns a permanent failure THEN it should return a not retriable Error", async () => {
+    handleStatusChangeUtilityMock.mockImplementationOnce(() =>
+      TE.left(toPermanentFailure(Error("PERMANENT")))
+    );
+    const result = await handle(
+      mockAppinsights as any,
+      mockQueueClient as any,
+      anyParam,
+      anyParam,
+      anyParam,
+      aMessageStatus
+    );
+
+    expect(mockQueueClient.sendMessage).toHaveBeenCalled();
+    expect(mockAppinsights.trackEvent).toHaveBeenCalled();
+    expect(mockAppinsights.trackEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "trigger.messages.cqrs.updatemessageview.failed"
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        body: aMessageStatus,
+        retriable: false
+      })
+    );
+  });
+
+  it("GIVEN a messageStatus WHEN handleStatusChange returns void THEN it should return void without store any error", async () => {
+    const result = await handle(
+      mockAppinsights as any,
+      mockQueueClient as any,
+      anyParam,
+      anyParam,
+      anyParam,
+      aMessageStatus
+    );
+
+    expect(mockQueueClient.sendMessage).not.toHaveBeenCalled();
+    expect(mockAppinsights.trackEvent).not.toHaveBeenCalled();
+    expect(result).toEqual(void 0);
+  });
+
+  it("GIVEN a messageStatus WHEN status is not PROCESSED THEN it should return void without store any error", async () => {
+    const result = await handle(
+      mockAppinsights as any,
+      mockQueueClient as any,
+      anyParam,
+      anyParam,
+      anyParam,
+      { ...aMessageStatus, status: MessageStatusValueEnum.FAILED }
+    );
+
+    expect(mockQueueClient.sendMessage).not.toHaveBeenCalled();
+    expect(mockAppinsights.trackEvent).not.toHaveBeenCalled();
+    expect(result).toEqual(void 0);
   });
 });

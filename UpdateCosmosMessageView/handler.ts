@@ -1,11 +1,12 @@
 /* eslint-disable max-params */
 import { MessageViewModel } from "@pagopa/io-functions-commons/dist/src/models/message_view";
-import { pipe, flow } from "fp-ts/lib/function";
+import { pipe, flow, identity, constVoid } from "fp-ts/lib/function";
 import * as E from "fp-ts/Either";
 import * as TE from "fp-ts/TaskEither";
 import { MessageModel } from "@pagopa/io-functions-commons/dist/src/models/message";
 import { BlobService } from "azure-storage";
 import { QueueClient, QueueSendMessageResponse } from "@azure/storage-queue";
+import { MessageStatusValueEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/MessageStatusValue";
 import { TelemetryClient } from "../utils/appinsights";
 import {
   handleStatusChange,
@@ -77,9 +78,9 @@ export const storeAndLogErrorFirst = <T>(
 
 export const handle = (
   telemetryClient: TelemetryClient,
+  queueClient: QueueClient,
   messageViewModel: MessageViewModel,
   messageModel: MessageModel,
-  queueClient: QueueClient,
   blobService: BlobService,
   rawMessageStatus: unknown
 ): Promise<IStorableError<unknown> | void> =>
@@ -88,8 +89,22 @@ export const handle = (
     RetrievedMessageStatusWithFiscalCode.decode,
     TE.fromEither,
     TE.mapLeft(flow(errorsToError, toPermanentFailure)),
-    TE.chain(handleStatusChange(messageViewModel, messageModel, blobService)),
+    TE.chain(
+      flow(
+        // skip Message Statuses that are not PROCESSED
+        TE.fromPredicate(
+          messageStatusWithFiscalCode =>
+            messageStatusWithFiscalCode.status !==
+            MessageStatusValueEnum.PROCESSED,
+          identity
+        ),
+        TE.orElseW(
+          handleStatusChange(messageViewModel, messageModel, blobService)
+        )
+      )
+    ),
     TE.mapLeft(toStorableError(rawMessageStatus)),
     TE.orElseFirst(storeAndLogErrorFirst(queueClient, telemetryClient)),
+    TE.map(constVoid),
     TE.toUnion
   )();

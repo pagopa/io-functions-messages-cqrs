@@ -24,7 +24,7 @@ const handleStatusChangeMock = jest
   .mockImplementation(() => TE.of(void 0));
 jest
   .spyOn(util, "handleStatusChange")
-  .mockImplementation(handleStatusChangeMock);
+  .mockImplementation(() => handleStatusChangeMock);
 
 const inputMessage = {
   body: {
@@ -82,6 +82,37 @@ describe("HandleMessageViewUpdateFailureHandler", () => {
   });
 
   it("shoud return a Permanent failure if input is not retriable", async () => {
+    pipe(
+      TE.tryCatch(
+        () =>
+          HandleMessageViewUpdateFailureHandler(
+            functionsContextMock,
+            aNotRetriableInput,
+            telemetryClientMock,
+            anyParam,
+            anyParam,
+            anyParam
+          ),
+        toError
+      ),
+      TE.bimap(
+        () => fail,
+        result => {
+          expect(result).toEqual(
+            expect.objectContaining({
+              kind: "PERMANENT"
+            })
+          );
+          expect(telemetryClientMock.trackException).toHaveBeenCalled();
+        }
+      )
+    );
+  });
+
+  it("shoud return a Permanent failure if handleStatusChange returns a Permanent Failure", async () => {
+    handleStatusChangeMock.mockImplementationOnce(() =>
+      TE.left({ ...aTransientFailure, kind: "PERMANENT" })
+    );
     pipe(
       TE.tryCatch(
         () =>
