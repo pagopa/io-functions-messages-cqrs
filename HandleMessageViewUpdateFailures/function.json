@@ -5,12 +5,7 @@
       "direction": "in",
       "name": "messageviewfailure",
       "queueName": "%MESSAGE_VIEW_UPDATE_FAILURE_QUEUE_NAME%",
-      "connection":"%MESSAGE_VIEW_UPDATE_FAILURE_CONNECTION%"
-    },
-    {
-      "name": "starter",
-      "type": "durableClient",
-      "direction": "in"
+      "connection":"%MESSAGE_VIEW_UPDATE_FAILURE_QUEUE_CONNECTION%"
     }
   ],
   "scriptFile": "../dist/HandleMessageViewUpdateFailures/index.js"
