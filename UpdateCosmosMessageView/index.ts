@@ -9,14 +9,13 @@ import {
 } from "@pagopa/io-functions-commons/dist/src/models/message";
 import {
   MESSAGE_VIEW_COLLECTION_NAME,
-  MessageViewModel,
-  MessageView
+  MessageViewModel
 } from "@pagopa/io-functions-commons/dist/src/models/message_view";
 import { QueueClient } from "@azure/storage-queue";
 import { getConfigOrThrow } from "../utils/config";
 import { cosmosdbInstance } from "../utils/cosmosdb";
 import { initTelemetryClient } from "../utils/appinsights";
-import { handle } from "./handler";
+import { handle, IStorableError } from "./handler";
 
 const config = getConfigOrThrow();
 
@@ -34,8 +33,8 @@ const messageContentBlobService = createBlobService(
 );
 
 const queueClient = new QueueClient(
-  config.ERRORS_QUEUE_STORAGE_CONNECTION,
-  config.ERRORS_MESSAGE_VIEW_QUEUE_NAME
+  config.MESSAGE_VIEW_UPDATE_FAILURE_CONNECTION,
+  config.MESSAGE_VIEW_UPDATE_FAILURE_QUEUE_NAME
 );
 
 const telemetryClient = initTelemetryClient(
@@ -45,7 +44,7 @@ const telemetryClient = initTelemetryClient(
 const run = async (
   _context: Context,
   rawMessageStatus: unknown
-): Promise<Error | MessageView> =>
+): Promise<IStorableError<unknown> | void> =>
   handle(
     telemetryClient,
     messageViewModel,

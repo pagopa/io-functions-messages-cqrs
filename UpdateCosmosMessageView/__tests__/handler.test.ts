@@ -156,7 +156,9 @@ describe("storeAndLogError", () => {
       })
     );
     expect(mockAppinsights.trackEvent).toBeCalledWith(
-      expect.objectContaining({ name: "trigger.elt.updatemessageview.failed" })
+      expect.objectContaining({
+        name: "trigger.messages.cqrs.updatemessageview.failed"
+      })
     );
   });
 
@@ -178,7 +180,8 @@ describe("storeAndLogError", () => {
     );
     expect(mockAppinsights.trackEvent).toBeCalledWith(
       expect.objectContaining({
-        name: "trigger.elt.updatemessageview.failedwithoutstoringerror"
+        name:
+          "trigger.messages.cqrs.updatemessageview.failedwithoutstoringerror"
       })
     );
   });
@@ -202,8 +205,10 @@ describe("handleStatusChange", () => {
           archived: aMessageStatus.isArchived,
           processing: aMessageStatus.status,
           read: aMessageStatus.isRead
-        }
-      }
+        },
+        version: aMessageStatus.version
+      },
+      expect.anything()
     );
   });
 
@@ -265,7 +270,7 @@ describe("handleStatusChange", () => {
     expect(E.isLeft(result)).toBeTruthy();
     if (E.isLeft(result)) {
       expect(result.left).toEqual(
-        expect.objectContaining({ kind: "COSMOS_ERROR_RESPONSE" })
+        expect.objectContaining({ kind: "TRANSIENT" })
       );
     }
     expect(mockMessageViewModel.patch).toBeCalledTimes(1);
@@ -288,7 +293,7 @@ describe("handleStatusChange", () => {
     expect(E.isLeft(result)).toBeTruthy();
     if (E.isLeft(result)) {
       expect(result.left).toEqual(
-        new Error(`Message metadata not found for ${aMessageId}`)
+        expect.objectContaining({ kind: "TRANSIENT" })
       );
     }
     expect(mockMessageViewModel.patch).toBeCalledTimes(1);
@@ -315,7 +320,7 @@ describe("handleStatusChange", () => {
     expect(E.isLeft(result)).toBeTruthy();
     if (E.isLeft(result)) {
       expect(result.left).toEqual(
-        new Error(`Message body not found for ${aMessageId}`)
+        expect.objectContaining({ kind: "TRANSIENT" })
       );
     }
     expect(mockMessageViewModel.patch).toBeCalledTimes(1);
@@ -353,7 +358,7 @@ describe("handleStatusChange", () => {
     expect(E.isLeft(result)).toBeTruthy();
     if (E.isLeft(result)) {
       expect(result.left).toEqual(
-        expect.objectContaining({ kind: "COSMOS_ERROR_RESPONSE" })
+        expect.objectContaining({ kind: "TRANSIENT" })
       );
     }
     expect(mockMessageViewModel.patch).toBeCalledTimes(1);

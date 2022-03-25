@@ -4,10 +4,10 @@
       "type": "eventHubTrigger",
       "name": "rawMessageStatus",
       "direction": "in",
-      "eventHubName": "%MESSAGE_VIEW_TOPIC_NAME%",
-      "consumerGroup": "%MESSAGE_VIEW_CONSUMER_GROUP%",
+      "eventHubName": "%MESSAGE_STATUS_TOPIC_NAME%",
+      "consumerGroup": "%MESSAGE_STAUTS_TOPIC_CONSUMER_GROUP%",
       "cardinality": "one",
-      "connection": "MESSAGE_VIEW_TOPIC_CONNECTION_STRING"
+      "connection": "MESSAGE_STAUTS_TOPIC_READER_CONNECTION_STRING"
     }
   ],
   "scriptFile": "../dist/UpdateCosmosMessageView/index.js"

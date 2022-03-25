@@ -14,7 +14,7 @@ import {
 import { Failure, toPermanentFailure, TransientFailure } from "../utils/errors";
 import { errorsToError } from "../utils/conversions";
 
-interface IStorableError<T> extends Error {
+export interface IStorableError<T> extends Error {
   readonly body: T;
   readonly retriable: boolean;
 }
@@ -45,7 +45,8 @@ export const storeAndLogError = <T>(
     storeError(queueClient),
     TE.mapLeft(storingError =>
       telemetryClient.trackEvent({
-        name: "trigger.elt.updatemessageview.failedwithoutstoringerror",
+        name:
+          "trigger.messages.cqrs.updatemessageview.failedwithoutstoringerror",
         properties: {
           processingError: JSON.stringify(processingError),
           storingError: storingError.message
@@ -55,7 +56,7 @@ export const storeAndLogError = <T>(
     ),
     TE.map(() =>
       telemetryClient.trackEvent({
-        name: "trigger.elt.updatemessageview.failed",
+        name: "trigger.messages.cqrs.updatemessageview.failed",
         properties: {
           processingError: JSON.stringify(processingError)
         },
