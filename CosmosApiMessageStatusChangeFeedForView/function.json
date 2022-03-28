@@ -9,17 +9,17 @@
       "databaseName": "%COSMOSDB_NAME%",
       "collectionName": "message-status",
       "leaseCollectionName": "cqrs-leases",
-      "leaseCollectionPrefix": "CosmosApiMessageStatusChangeFeed",
+      "leaseCollectionPrefix": "CosmosApiMessageStatusChangeFeedForView",
       "createLeaseCollectionIfNotExists": true,
       "startFromBeginning": true
     },
     {
       "type": "eventHub",
       "name": "outputMessageStatus",
-      "eventHubName": "%MESSAGE_STATUS_TOPIC_NAME%",
-      "connection": "MESSAGE_STAUTS_TOPIC_CONNECTION_STRING",
+      "eventHubName": "%MESSAGE_STATUS_FOR_VIEW_TOPIC_NAME%",
+      "connection": "MESSAGE_STAUTS_FOR_VIEW_TOPIC_CONNECTION_STRING",
       "direction": "out"
   }
   ],
-  "scriptFile": "../dist/CosmosApiMessageStatusChangeFeed/index.js"
+  "scriptFile": "../dist/CosmosApiMessageStatusChangeFeedForView/index.js"
 }

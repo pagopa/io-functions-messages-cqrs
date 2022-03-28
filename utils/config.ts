@@ -24,8 +24,8 @@ export const IConfig = t.interface({
   COSMOSDB_NAME: NonEmptyString,
   COSMOSDB_URI: NonEmptyString,
 
-  MESSAGE_STATUS_TOPIC_NAME: NonEmptyString,
-  MESSAGE_STAUTS_TOPIC_CONNECTION_STRING: NonEmptyString,
+  MESSAGE_STATUS_FOR_VIEW_TOPIC_NAME: NonEmptyString,
+  MESSAGE_STAUTS_FOR_VIEW_TOPIC_CONNECTION_STRING: NonEmptyString,
 
   QueueStorageConnection: NonEmptyString,
 
