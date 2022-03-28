@@ -61,9 +61,11 @@ const isCosmosErrorNotFoundResponse = (
 ): err is CosmosErrorResponseType =>
   err.kind === "COSMOS_ERROR_RESPONSE" && err.error.code === 404;
 
-const wrapErrorToTransientFailure = (customReason?: string) => (
-  err: unknown
-): Failure => pipe(err, E.toError, e => toTransientFailure(e, customReason));
+const wrapErrorToTransientFailure = (
+  customReason?: string,
+  modelId?: string
+) => (err: unknown): Failure =>
+  pipe(err, E.toError, e => toTransientFailure(e, customReason)(modelId));
 
 const patchViewWithVersionCondition = (
   messageViewModel: MessageViewModel,
@@ -104,7 +106,10 @@ export const handleStatusChange = (
       flow(
         TE.fromPredicate(
           isCosmosErrorNotFoundResponse,
-          wrapErrorToTransientFailure("Cannot Patch Message View")
+          wrapErrorToTransientFailure(
+            "Cannot Patch Message View",
+            messageStatus.messageId
+          )
         ),
         // find and enrich message
         TE.chain(() =>
@@ -113,14 +118,19 @@ export const handleStatusChange = (
               messageStatus.messageId,
               messageStatus.fiscalCode
             ]),
-            TE.mapLeft(wrapErrorToTransientFailure("Cannot find message"))
+            TE.mapLeft(
+              wrapErrorToTransientFailure(
+                "Cannot find message",
+                messageStatus.messageId
+              )
+            )
           )
         ),
         TE.chain(
           TE.fromOption(() =>
             toPermanentFailure(
               Error(`Message metadata not found for ${messageStatus.messageId}`)
-            )
+            )(messageStatus.messageId)
           )
         ),
         TE.chain(messageWithoutContent =>
@@ -131,7 +141,8 @@ export const handleStatusChange = (
             ),
             TE.mapLeft(
               wrapErrorToTransientFailure(
-                "Cannot get message content from Blob"
+                "Cannot get message content from Blob",
+                messageStatus.messageId
               )
             ),
             TE.chainW(
@@ -140,7 +151,7 @@ export const handleStatusChange = (
                   new Error(
                     `Message body not found for ${messageWithoutContent.id}`
                   )
-                )
+                )(messageStatus.messageId)
               )
             ),
             TE.map(content => ({ ...messageWithoutContent, content }))
@@ -184,7 +195,12 @@ export const handleStatusChange = (
           )
         ),
         TE.chainW(messageView => messageViewModel.create(messageView)),
-        TE.mapLeft(wrapErrorToTransientFailure("Cannot create Message View"))
+        TE.mapLeft(
+          wrapErrorToTransientFailure(
+            "Cannot create Message View",
+            messageStatus.messageId
+          )
+        )
       )
     ),
     TE.map(constVoid)

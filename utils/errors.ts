@@ -22,9 +22,8 @@ export const Failure = t.intersection([
 ]);
 export type Failure = t.TypeOf<typeof Failure>;
 
-export const toTransientFailure = (
-  err: Error,
-  customReason?: string
+export const toTransientFailure = (err: Error, customReason?: string) => (
+  modelId?: string
 ): Failure =>
   pipe(
     customReason,
@@ -34,13 +33,13 @@ export const toTransientFailure = (
     errorMsg =>
       Failure.encode({
         kind: "TRANSIENT",
+        modelId,
         reason: `TRANSIENT FAILURE|${errorMsg}`
       })
   );
 
-export const toPermanentFailure = (
-  err: Error,
-  customReason?: string
+export const toPermanentFailure = (err: Error, customReason?: string) => (
+  modelId?: string
 ): Failure =>
   pipe(
     customReason,
@@ -50,6 +49,7 @@ export const toPermanentFailure = (
     errorMsg =>
       Failure.encode({
         kind: "PERMANENT",
+        modelId,
         reason: `PERMANENT FAILURE|${errorMsg}`
       })
   );

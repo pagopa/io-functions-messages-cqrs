@@ -88,7 +88,7 @@ export const handle = (
     rawMessageStatus,
     RetrievedMessageStatusWithFiscalCode.decode,
     TE.fromEither,
-    TE.mapLeft(flow(errorsToError, toPermanentFailure)),
+    TE.mapLeft(flow(errorsToError, e => toPermanentFailure(e)())),
     TE.chain(
       flow(
         // skip Message Statuses that are not PROCESSED

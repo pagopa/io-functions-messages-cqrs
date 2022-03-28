@@ -54,13 +54,13 @@ export const HandleMessageViewUpdateFailureHandler = (
     message,
     HandleMessageViewFailureInput.decode,
     TE.fromEither,
-    TE.mapLeft(flow(errorsToError, toPermanentFailure)),
+    TE.mapLeft(flow(errorsToError, e => toPermanentFailure(e)())),
     TE.chain(failureInput =>
       pipe(
         failureInput,
         RetriableHandleMessageViewFailureInput.decode,
         TE.fromEither,
-        TE.mapLeft(() => toPermanentFailure(Error(failureInput.message)))
+        TE.mapLeft(() => toPermanentFailure(Error(failureInput.message))())
       )
     ),
     TE.map(retriableFailure => retriableFailure.body),
@@ -78,6 +78,7 @@ export const HandleMessageViewUpdateFailureHandler = (
           detail: err.kind,
           fatal: PermanentFailure.is(err).toString(),
           isSuccess: "false",
+          modelId: err.modelId ?? "",
           name: "message.view.update.retry.failure"
         },
         tagOverrides: { samplingEnabled: String(isTransient) }

@@ -3,11 +3,7 @@ import * as E from "fp-ts/Either";
 import * as TE from "fp-ts/TaskEither";
 import * as mw from "../../utils/message_view";
 import { aMessageStatus } from "../../__mocks__/message";
-import {
-  toPermanentFailure,
-  toTransientFailure,
-  TransientFailure
-} from "../../utils/errors";
+import { toPermanentFailure, TransientFailure } from "../../utils/errors";
 import { MessageStatusValueEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/MessageStatusValue";
 
 const dummyDocument = {
