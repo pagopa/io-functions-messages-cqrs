@@ -5,9 +5,9 @@
       "name": "rawMessageStatus",
       "direction": "in",
       "eventHubName": "%MESSAGE_STATUS_FOR_VIEW_TOPIC_NAME%",
-      "consumerGroup": "%MESSAGE_STAUTS_FOR_VIEW_TOPIC_CONSUMER_GROUP%",
+      "consumerGroup": "%MESSAGE_STATUS_FOR_VIEW_TOPIC_CONSUMER_GROUP%",
       "cardinality": "one",
-      "connection": "MESSAGE_STAUTS_FOR_VIEW_TOPIC_READER_CONNECTION_STRING"
+      "connection": "MESSAGE_STATUS_FOR_VIEW_TOPIC_CONSUMER_CONNECTION_STRING"
     }
   ],
   "scriptFile": "../dist/UpdateCosmosMessageView/index.js"

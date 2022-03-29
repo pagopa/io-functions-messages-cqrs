@@ -5,7 +5,7 @@
       "direction": "in",
       "name": "messageviewfailure",
       "queueName": "%MESSAGE_VIEW_UPDATE_FAILURE_QUEUE_NAME%",
-      "connection":"INTERNAL_STORAGE_CONNECTION_STRING"
+      "connection":"MESSAGE_VIEW_UPDATE_FAILURE_CONNECTION"
     }
   ],
   "scriptFile": "../dist/HandleMessageViewUpdateFailures/index.js"
