@@ -16,7 +16,7 @@
     },
     "eventHubs": {
       "initialOffsetOptions": {
-          "type": "fromEnd",
+          "type": "fromStart",
           "enqueuedTimeUtc": ""
       }
     }
