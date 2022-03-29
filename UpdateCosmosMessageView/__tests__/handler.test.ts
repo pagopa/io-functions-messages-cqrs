@@ -55,10 +55,12 @@ describe("storeAndLogError", () => {
 
     expect(E.isRight(result)).toBeTruthy();
     expect(mockQueueClient.sendMessage).toBeCalledWith(
-      JSON.stringify({
-        ...dummyStorableError,
-        body: dummyStorableError.body
-      })
+      Buffer.from(
+        JSON.stringify({
+          ...dummyStorableError,
+          body: dummyStorableError.body
+        })
+      ).toString("base64")
     );
     expect(mockAppinsights.trackEvent).toBeCalledWith(
       expect.objectContaining({
@@ -78,10 +80,12 @@ describe("storeAndLogError", () => {
 
     expect(E.isLeft(result)).toBeTruthy();
     expect(mockQueueClient.sendMessage).toBeCalledWith(
-      JSON.stringify({
-        ...dummyStorableError,
-        body: dummyStorableError.body
-      })
+      Buffer.from(
+        JSON.stringify({
+          ...dummyStorableError,
+          body: dummyStorableError.body
+        })
+      ).toString("base64")
     );
     expect(mockAppinsights.trackEvent).toBeCalledWith(
       expect.objectContaining({

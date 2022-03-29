@@ -24,7 +24,10 @@ export const storeError = (queueClient: QueueClient) => (
   storableError: IStorableError<unknown>
 ): TE.TaskEither<Error, QueueSendMessageResponse> =>
   TE.tryCatch(
-    () => queueClient.sendMessage(JSON.stringify(storableError)),
+    () =>
+      queueClient.sendMessage(
+        Buffer.from(JSON.stringify(storableError)).toString("base64")
+      ),
     E.toError
   );
 
