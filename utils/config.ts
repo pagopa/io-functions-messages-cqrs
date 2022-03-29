@@ -19,9 +19,13 @@ export type IConfig = t.TypeOf<typeof IConfig>;
 export const IConfig = t.interface({
   AzureWebJobsStorage: NonEmptyString,
 
+  COSMOSDB_CONNECTION_STRING: NonEmptyString,
   COSMOSDB_KEY: NonEmptyString,
   COSMOSDB_NAME: NonEmptyString,
   COSMOSDB_URI: NonEmptyString,
+
+  MESSAGE_STATUS_FOR_VIEW_TOPIC_NAME: NonEmptyString,
+  MESSAGE_STATUS_FOR_VIEW_TOPIC_PRODUCER_CONNECTION_STRING: NonEmptyString,
 
   QueueStorageConnection: NonEmptyString,
 

@@ -1,5 +1,6 @@
 {  
   "version": "2.0",
+  "functionTimeout": "02:30:00",
   "logging": {
     "logLevel": {
       "default": "Trace"
@@ -8,6 +9,20 @@
   "extensions": {
     "http": {
       "routePrefix": ""
+    },
+    "cosmosDB": {
+      "connectionMode": "Gateway",
+      "protocol": "Https"
+    },
+    "eventHubs": {
+      "initialOffsetOptions": {
+          "type": "fromEnd",
+          "enqueuedTimeUtc": ""
+      }
     }
+  },
+  "extensionBundle": {
+    "id": "Microsoft.Azure.Functions.ExtensionBundle",
+    "version": "[2.*, 3.0.0)"
   }
 }
