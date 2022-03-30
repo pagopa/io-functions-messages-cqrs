@@ -11,7 +11,7 @@ import { toError } from "fp-ts/lib/Either";
 
 const functionsContextMock = ({
   log: {
-    error: jest.fn(console.log)
+    error: jest.fn()
   }
 } as unknown) as Context;
 
@@ -53,145 +53,95 @@ describe("HandleMessageViewUpdateFailureHandler", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
-  it("shoud return a Permanent failure if input decode fails", async () => {
-    pipe(
-      TE.tryCatch(
-        () =>
-          HandleMessageViewUpdateFailureHandler(
-            functionsContextMock,
-            { wrongInput: true },
-            telemetryClientMock,
-            anyParam,
-            anyParam,
-            anyParam
-          ),
-        toError
-      ),
-      TE.bimap(
-        () => fail,
-        result => {
-          expect(result).toEqual(
-            expect.objectContaining({
-              kind: "PERMANENT"
-            })
-          );
-          expect(telemetryClientMock.trackException).toHaveBeenCalled();
-        }
+  it("shoud return void if everything works fine", async () => {
+    await expect(
+      HandleMessageViewUpdateFailureHandler(
+        functionsContextMock,
+        aRetriableInput,
+        telemetryClientMock,
+        anyParam,
+        anyParam,
+        anyParam
       )
-    );
-  });
-
-  it("shoud return a Permanent failure if input is not retriable", async () => {
-    pipe(
-      TE.tryCatch(
-        () =>
-          HandleMessageViewUpdateFailureHandler(
-            functionsContextMock,
-            aNotRetriableInput,
-            telemetryClientMock,
-            anyParam,
-            anyParam,
-            anyParam
-          ),
-        toError
-      ),
-      TE.bimap(
-        () => fail,
-        result => {
-          expect(result).toEqual(
-            expect.objectContaining({
-              kind: "PERMANENT"
-            })
-          );
-          expect(telemetryClientMock.trackException).toHaveBeenCalled();
-        }
-      )
-    );
-  });
-
-  it("shoud return a Permanent failure if handleStatusChange returns a Permanent Failure", async () => {
-    handleStatusChangeMock.mockImplementationOnce(() =>
-      TE.left({ ...aTransientFailure, kind: "PERMANENT" })
-    );
-    pipe(
-      TE.tryCatch(
-        () =>
-          HandleMessageViewUpdateFailureHandler(
-            functionsContextMock,
-            aNotRetriableInput,
-            telemetryClientMock,
-            anyParam,
-            anyParam,
-            anyParam
-          ),
-        toError
-      ),
-      TE.bimap(
-        () => fail,
-        result => {
-          expect(result).toEqual(
-            expect.objectContaining({
-              kind: "PERMANENT"
-            })
-          );
-          expect(telemetryClientMock.trackException).toHaveBeenCalled();
-        }
-      )
-    );
+    ).resolves.toEqual(void 0);
+    expect(telemetryClientMock.trackException).not.toHaveBeenCalled();
   });
 
   it("shoud throw if Transient failure occurs", async () => {
     handleStatusChangeMock.mockImplementationOnce(() =>
       TE.left(aTransientFailure)
     );
-    pipe(
-      TE.tryCatch(
-        () =>
-          HandleMessageViewUpdateFailureHandler(
-            functionsContextMock,
-            aRetriableInput,
-            telemetryClientMock,
-            anyParam,
-            anyParam,
-            anyParam
-          ),
-        toError
-      ),
-      TE.bimap(
-        () => {
-          expect(telemetryClientMock.trackException).toHaveBeenCalledWith(
-            telemetryClientMock,
-            expect.objectContaining({
-              tagOverrides: { samplingEnabled: "false" }
-            })
-          );
-        },
-        () => fail
+    await expect(
+      HandleMessageViewUpdateFailureHandler(
+        functionsContextMock,
+        aRetriableInput,
+        telemetryClientMock,
+        anyParam,
+        anyParam,
+        anyParam
       )
+    ).rejects.toBeDefined();
+    expect(telemetryClientMock.trackException).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tagOverrides: { samplingEnabled: "true" }
+      })
     );
   });
 
-  it("shoud return void if everything works fine", async () => {
-    pipe(
-      TE.tryCatch(
-        () =>
-          HandleMessageViewUpdateFailureHandler(
-            functionsContextMock,
-            aRetriableInput,
-            telemetryClientMock,
-            anyParam,
-            anyParam,
-            anyParam
-          ),
-        toError
-      ),
-      TE.bimap(
-        () => fail,
-        result => {
-          expect(telemetryClientMock.trackException).not.toHaveBeenCalled();
-          expect(result).toEqual(void 0);
-        }
+  it("shoud return a Permanent failure if input decode fails", async () => {
+    await expect(
+      HandleMessageViewUpdateFailureHandler(
+        functionsContextMock,
+        { wrongInput: true },
+        telemetryClientMock,
+        anyParam,
+        anyParam,
+        anyParam
       )
+    ).resolves.toEqual(
+      expect.objectContaining({
+        kind: "PERMANENT"
+      })
     );
+    expect(telemetryClientMock.trackException).toHaveBeenCalled();
+  });
+
+  it("shoud return a Permanent failure if input is not retriable", async () => {
+    await expect(
+      HandleMessageViewUpdateFailureHandler(
+        functionsContextMock,
+        aNotRetriableInput,
+        telemetryClientMock,
+        anyParam,
+        anyParam,
+        anyParam
+      )
+    ).resolves.toEqual(
+      expect.objectContaining({
+        kind: "PERMANENT"
+      })
+    );
+    expect(telemetryClientMock.trackException).toHaveBeenCalled();
+  });
+
+  it("shoud return a Permanent failure if handleStatusChange returns a Permanent Failure", async () => {
+    handleStatusChangeMock.mockImplementationOnce(() =>
+      TE.left({ ...aTransientFailure, kind: "PERMANENT" })
+    );
+    await expect(
+      HandleMessageViewUpdateFailureHandler(
+        functionsContextMock,
+        aNotRetriableInput,
+        telemetryClientMock,
+        anyParam,
+        anyParam,
+        anyParam
+      )
+    ).resolves.toEqual(
+      expect.objectContaining({
+        kind: "PERMANENT"
+      })
+    );
+    expect(telemetryClientMock.trackException).toHaveBeenCalled();
   });
 });

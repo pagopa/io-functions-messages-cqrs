@@ -85,7 +85,7 @@ describe("handleStatusChange", () => {
       expect.objectContaining({
         components: {
           attachments: { has: false },
-          euCovidCert: { has: true },
+          euCovidCert: { has: false },
           legalData: { has: false },
           payment: { has: false }
         },
@@ -213,7 +213,7 @@ describe("handleStatusChange", () => {
       expect.objectContaining({
         components: {
           attachments: { has: false },
-          euCovidCert: { has: true },
+          euCovidCert: { has: false },
           legalData: { has: false },
           payment: { has: false }
         },

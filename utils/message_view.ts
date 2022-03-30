@@ -164,7 +164,7 @@ export const handleStatusChange = (
                 messageWithContent.content.legal_data?.has_attachment ?? false
             },
             euCovidCert: {
-              has: messageWithContent.content.eu_covid_cert !== null
+              has: messageWithContent.content.eu_covid_cert != null
             },
             legalData: {
               has: messageWithContent.content.legal_data != null
