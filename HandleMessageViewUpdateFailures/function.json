@@ -8,5 +8,11 @@
       "connection":"MESSAGE_VIEW_UPDATE_FAILURE_CONNECTION"
     }
   ],
+  "retry": {
+    "strategy": "exponentialBackoff",
+    "maxRetryCount": 5,
+    "minimumInterval": "00:00:05",
+    "maximumInterval": "00:30:00"
+  },
   "scriptFile": "../dist/HandleMessageViewUpdateFailures/index.js"
 }
