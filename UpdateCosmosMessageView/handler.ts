@@ -43,20 +43,23 @@ export const toStorableError = <T>(body: T) => (
 export const storeAndLogError = <T>(
   queueClient: QueueClient,
   telemetryClient: TelemetryClient
-) => (processingError: IStorableError<T>): TE.TaskEither<void, void> =>
+) => (processingError: IStorableError<T>): TE.TaskEither<Error, void> =>
   pipe(
     processingError,
     storeError(queueClient),
     TE.mapLeft(storingError =>
-      telemetryClient.trackEvent({
-        name:
-          "trigger.messages.cqrs.updatemessageview.failedwithoutstoringerror",
-        properties: {
-          processingError: JSON.stringify(processingError),
-          storingError: storingError.message
-        },
-        tagOverrides: { samplingEnabled: "false" }
-      })
+      pipe(
+        telemetryClient.trackEvent({
+          name:
+            "trigger.messages.cqrs.updatemessageview.failedwithoutstoringerror",
+          properties: {
+            processingError: JSON.stringify(processingError),
+            storingError: storingError.message
+          },
+          tagOverrides: { samplingEnabled: "false" }
+        }),
+        () => storingError
+      )
     ),
     TE.map(() =>
       telemetryClient.trackEvent({
@@ -69,14 +72,17 @@ export const storeAndLogError = <T>(
     )
   );
 
-export const storeAndLogErrorFirst = <T>(
+export const storeAndLogErrorOrThrow = <T>(
   queueClient: QueueClient,
   telemetryClient: TelemetryClient
 ) => (error: IStorableError<T>): TE.TaskEither<IStorableError<T>, void> =>
   pipe(
-    error,
-    storeAndLogError(queueClient, telemetryClient),
-    TE.mapLeft(() => error)
+    TE.right(error),
+    TE.chainFirst(storeAndLogError(queueClient, telemetryClient)),
+    TE.mapLeft(e => {
+      throw e;
+    }),
+    TE.swap
   );
 
 export const handle = (
@@ -107,7 +113,7 @@ export const handle = (
       )
     ),
     TE.mapLeft(toStorableError(rawMessageStatus)),
-    TE.orElseFirst(storeAndLogErrorFirst(queueClient, telemetryClient)),
+    TE.orElseFirst(storeAndLogErrorOrThrow(queueClient, telemetryClient)),
     TE.map(constVoid),
     TE.toUnion
   )();

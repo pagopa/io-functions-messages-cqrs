@@ -10,5 +10,11 @@
       "connection": "MESSAGE_STATUS_FOR_VIEW_TOPIC_CONSUMER_CONNECTION_STRING"
     }
   ],
+  "retry": {
+    "strategy": "exponentialBackoff",
+    "maxRetryCount": 150,
+    "minimumInterval": "00:00:05",
+    "maximumInterval": "00:05:00"
+  },
   "scriptFile": "../dist/UpdateCosmosMessageView/index.js"
 }

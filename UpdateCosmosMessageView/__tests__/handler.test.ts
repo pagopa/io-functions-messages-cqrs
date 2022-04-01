@@ -211,4 +211,34 @@ describe("handle", () => {
     expect(mockAppinsights.trackEvent).not.toHaveBeenCalled();
     expect(result).toEqual(void 0);
   });
+
+  it("GIVEN a messageStatus WHEN handleStatusChange returns a transient failure and error queue storage is not working THEN it should throw an error", async () => {
+    handleStatusChangeUtilityMock.mockImplementationOnce(() =>
+      TE.left(aTransientFailure)
+    );
+    const aCreationError = new Error("createEntity failed");
+    mockQueueClient.sendMessage.mockImplementationOnce(() =>
+      Promise.reject(aCreationError)
+    );
+
+    await expect(
+      handle(
+        mockAppinsights as any,
+        mockQueueClient as any,
+        anyParam,
+        anyParam,
+        anyParam,
+        aMessageStatus
+      )
+    ).rejects.toEqual(aCreationError);
+
+    expect(mockQueueClient.sendMessage).toHaveBeenCalled();
+    expect(mockAppinsights.trackEvent).toHaveBeenCalled();
+    expect(mockAppinsights.trackEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name:
+          "trigger.messages.cqrs.updatemessageview.failedwithoutstoringerror"
+      })
+    );
+  });
 });
