@@ -12,7 +12,7 @@
   ],
   "retry": {
     "strategy": "exponentialBackoff",
-    "maxRetryCount": 150,
+    "maxRetryCount": -1,
     "minimumInterval": "00:00:05",
     "maximumInterval": "00:05:00"
   },
