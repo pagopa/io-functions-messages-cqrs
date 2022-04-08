@@ -33,7 +33,7 @@ const messageContentBlobService = createBlobService(
 );
 
 const queueClient = new QueueClient(
-  config.MESSAGE_VIEW_UPDATE_FAILURE_CONNECTION,
+  config.INTERNAL_STORAGE_CONNECTION_STRING,
   config.MESSAGE_VIEW_UPDATE_FAILURE_QUEUE_NAME
 );
 
