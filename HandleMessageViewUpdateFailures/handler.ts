@@ -60,10 +60,10 @@ export const HandleMessageViewUpdateFailureHandler = (
         failureInput,
         RetriableHandleMessageViewFailureInput.decode,
         TE.fromEither,
-        TE.mapLeft(() => toPermanentFailure(Error(failureInput.message))())
+        TE.mapLeft(() => toPermanentFailure(Error(failureInput.message))()),
+        TE.map(retriableFailure => retriableFailure.body)
       )
     ),
-    TE.map(retriableFailure => retriableFailure.body),
     TE.chain(handleStatusChange(messageViewModel, messageModel, blobService)),
     TE.mapLeft(err => {
       const isTransient = TransientFailure.is(err);
