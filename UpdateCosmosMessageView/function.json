@@ -1,0 +1,20 @@
+{
+  "bindings": [
+    {
+      "type": "eventHubTrigger",
+      "name": "rawMessageStatus",
+      "direction": "in",
+      "eventHubName": "%MESSAGE_STATUS_FOR_VIEW_TOPIC_NAME%",
+      "consumerGroup": "%MESSAGE_STATUS_FOR_VIEW_TOPIC_CONSUMER_GROUP%",
+      "cardinality": "one",
+      "connection": "MESSAGE_STATUS_FOR_VIEW_TOPIC_CONSUMER_CONNECTION_STRING"
+    }
+  ],
+  "retry": {
+    "strategy": "exponentialBackoff",
+    "maxRetryCount": -1,
+    "minimumInterval": "00:00:05",
+    "maximumInterval": "00:05:00"
+  },
+  "scriptFile": "../dist/UpdateCosmosMessageView/index.js"
+}

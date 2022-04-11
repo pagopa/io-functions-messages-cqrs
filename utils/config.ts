@@ -17,6 +17,8 @@ import { NonEmptyString } from "@pagopa/ts-commons/lib/strings";
 export type IConfig = t.TypeOf<typeof IConfig>;
 // eslint-disable-next-line @typescript-eslint/ban-types
 export const IConfig = t.interface({
+  APPINSIGHTS_INSTRUMENTATIONKEY: NonEmptyString,
+
   AzureWebJobsStorage: NonEmptyString,
 
   COSMOSDB_CONNECTION_STRING: NonEmptyString,
@@ -24,8 +26,16 @@ export const IConfig = t.interface({
   COSMOSDB_NAME: NonEmptyString,
   COSMOSDB_URI: NonEmptyString,
 
+  INTERNAL_STORAGE_CONNECTION_STRING: NonEmptyString,
+
+  MESSAGE_CONTENT_STORAGE_CONNECTION: NonEmptyString,
+
+  MESSAGE_STATUS_FOR_VIEW_TOPIC_CONSUMER_CONNECTION_STRING: NonEmptyString,
+  MESSAGE_STATUS_FOR_VIEW_TOPIC_CONSUMER_GROUP: NonEmptyString,
   MESSAGE_STATUS_FOR_VIEW_TOPIC_NAME: NonEmptyString,
   MESSAGE_STATUS_FOR_VIEW_TOPIC_PRODUCER_CONNECTION_STRING: NonEmptyString,
+
+  MESSAGE_VIEW_UPDATE_FAILURE_QUEUE_NAME: NonEmptyString,
 
   QueueStorageConnection: NonEmptyString,
 

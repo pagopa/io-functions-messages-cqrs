@@ -1,0 +1,18 @@
+{
+  "bindings": [
+    {
+      "type": "queueTrigger",
+      "direction": "in",
+      "name": "messageviewfailure",
+      "queueName": "%MESSAGE_VIEW_UPDATE_FAILURE_QUEUE_NAME%",
+      "connection":"INTERNAL_STORAGE_CONNECTION_STRING"
+    }
+  ],
+  "retry": {
+    "strategy": "exponentialBackoff",
+    "maxRetryCount": 5,
+    "minimumInterval": "00:00:05",
+    "maximumInterval": "00:30:00"
+  },
+  "scriptFile": "../dist/HandleMessageViewUpdateFailures/index.js"
+}
