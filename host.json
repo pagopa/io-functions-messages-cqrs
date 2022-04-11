@@ -7,9 +7,6 @@
     }
   },
   "extensions": {
-    "http": {
-      "routePrefix": ""
-    },
     "cosmosDB": {
       "connectionMode": "Gateway",
       "protocol": "Https"
