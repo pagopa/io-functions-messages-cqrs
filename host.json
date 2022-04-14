@@ -3,7 +3,15 @@
   "functionTimeout": "02:30:00",
   "logging": {
     "logLevel": {
-      "default": "Trace"
+      "default": "Information"
+    },
+    "applicationInsights": {
+      "samplingSettings": {
+        "isEnabled": true,
+        "maxTelemetryItemsPerSecond": 5,
+        "includedTypes": "PageView;Trace;Dependency;Request",
+        "excludedTypes": "Exception;Event;CustomEvent"
+      }
     }
   },
   "extensions": {
