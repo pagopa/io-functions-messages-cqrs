@@ -60,7 +60,8 @@ export const aComponents: Components = {
   attachments: { has: false },
   euCovidCert: { has: false },
   legalData: { has: false },
-  payment: { has: false }
+  payment: { has: false },
+  thirdParty: { has: false }
 };
 
 export const aStatus: Status = {
