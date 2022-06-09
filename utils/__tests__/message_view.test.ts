@@ -11,6 +11,8 @@ import { handleStatusChange } from "../message_view";
 import * as E from "fp-ts/Either";
 import * as TE from "fp-ts/TaskEither";
 import * as O from "fp-ts/lib/Option";
+import { MessageContent } from "@pagopa/io-functions-commons/dist/generated/definitions/MessageContent";
+import { NonEmptyString } from "@pagopa/ts-commons/lib/strings";
 
 const mockMessageViewModel = {
   patch: jest.fn(),
@@ -28,6 +30,13 @@ const mockBlobService = {
     .mockReturnValue(
       Promise.resolve(E.right(O.some(JSON.stringify(aMessageContent))))
     )
+};
+
+const aMessageContentWithThirdParty: MessageContent = {
+  ...aMessageContent,
+  third_party_data: {
+    id: "0" as NonEmptyString
+  }
 };
 describe("handleStatusChange", () => {
   beforeEach(() => {
@@ -87,7 +96,55 @@ describe("handleStatusChange", () => {
           attachments: { has: false },
           euCovidCert: { has: false },
           legalData: { has: false },
-          payment: { has: false }
+          payment: { has: false },
+          thirdParty: { has: false }
+        },
+        fiscalCode: aFiscalCode,
+        id: aMessageId,
+        messageTitle: "testtesttesttesttesttesttesttesttesttest",
+        senderServiceId: "agid",
+        status: { archived: false, processing: "PROCESSED", read: false },
+        timeToLive: 3600,
+        version: 0
+      })
+    );
+  });
+
+  it("GIVEN a valid message_status WHEN the message_view not contains the message THEN the message_status is enriched and a new message_view document with third party is created", async () => {
+    mockMessageViewModel.patch.mockReturnValueOnce(
+      TE.left(
+        CosmosErrorResponse({ code: 404, name: "error", message: "error" })
+      )
+    );
+    mockMessageViewModel.create.mockReturnValueOnce(TE.right(aMessageView));
+    mockMessageModel.getContentFromBlob.mockReturnValueOnce(
+      TE.right(O.some(aMessageContentWithThirdParty))
+    );
+    mockMessageModel.find.mockReturnValueOnce(
+      TE.right(O.some(aRetrievedMessageWithoutContent))
+    );
+
+    const result = await handleStatusChange(
+      mockMessageViewModel as any,
+      mockMessageModel as any,
+      mockBlobService as any
+    )(aMessageStatus)();
+
+    expect(E.isRight(result)).toBeTruthy();
+    expect(mockMessageViewModel.patch).toBeCalledTimes(1);
+    expect(mockMessageModel.find).toBeCalledWith([aMessageId, aFiscalCode]);
+    expect(mockMessageViewModel.create).toBeCalledWith(
+      expect.objectContaining({
+        components: {
+          attachments: { has: false },
+          euCovidCert: { has: false },
+          legalData: { has: false },
+          payment: { has: false },
+          thirdParty: {
+            has: true,
+            has_attachments: false,
+            id: aMessageContentWithThirdParty.third_party_data?.id
+          }
         },
         fiscalCode: aFiscalCode,
         id: aMessageId,
@@ -215,7 +272,8 @@ describe("handleStatusChange", () => {
           attachments: { has: false },
           euCovidCert: { has: false },
           legalData: { has: false },
-          payment: { has: false }
+          payment: { has: false },
+          thirdParty: { has: false }
         },
         fiscalCode: aFiscalCode,
         id: aMessageId,
@@ -226,5 +284,38 @@ describe("handleStatusChange", () => {
         version: 0
       })
     );
+  });
+
+  it("GIVEN a valid message_status WHEN the message_view not contains the message THEN the message_status is enriched with a not valid third_party and message_view write fails", async () => {
+    mockMessageViewModel.patch.mockReturnValueOnce(
+      TE.left(
+        CosmosErrorResponse({ code: 404, name: "error", message: "error" })
+      )
+    );
+    mockMessageModel.getContentFromBlob.mockReturnValueOnce(
+      TE.right(
+        O.some({
+          ...aMessageContentWithThirdParty,
+          third_party_data: { id: 0 }
+        })
+      )
+    );
+    mockMessageModel.find.mockReturnValueOnce(
+      TE.right(O.some(aRetrievedMessageWithoutContent))
+    );
+
+    const result = await handleStatusChange(
+      mockMessageViewModel as any,
+      mockMessageModel as any,
+      mockBlobService as any
+    )(aMessageStatus)();
+
+    expect(E.isLeft(result)).toBeTruthy();
+    if (E.isLeft(result)) {
+      expect(result.left.kind).toBe("TRANSIENT");
+    }
+    expect(mockMessageViewModel.patch).toBeCalledTimes(1);
+    expect(mockMessageModel.find).toBeCalledWith([aMessageId, aFiscalCode]);
+    expect(mockMessageViewModel.create).not.toHaveBeenCalled();
   });
 });

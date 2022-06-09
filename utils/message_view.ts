@@ -173,6 +173,18 @@ export const handleStatusChange = (
               has: messageWithContent.content.payment_data != null,
               notice_number:
                 messageWithContent.content.payment_data?.notice_number
+            },
+            thirdParty: {
+              has: messageWithContent.content.third_party_data != null,
+              has_attachments:
+                messageWithContent.content.third_party_data?.has_attachments,
+              id: messageWithContent.content.third_party_data?.id,
+              original_recipient_date:
+                messageWithContent.content.third_party_data
+                  ?.original_receipt_date,
+              original_sender:
+                messageWithContent.content.third_party_data?.original_sender,
+              summary: messageWithContent.content.third_party_data?.summary
             }
           },
           createdAt: messageWithContent.createdAt,
