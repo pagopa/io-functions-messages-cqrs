@@ -15,6 +15,7 @@ import { MessageModel } from "@pagopa/io-functions-commons/dist/src/models/messa
 import { BlobService } from "azure-storage";
 import { FiscalCode } from "@pagopa/ts-commons/lib/strings";
 import { RetrievedMessageStatus } from "@pagopa/io-functions-commons/dist/src/models/message_status";
+import { withoutUndefinedValues } from "@pagopa/ts-commons/lib/types";
 import { errorsToError } from "./conversions";
 import { Failure, toPermanentFailure, toTransientFailure } from "./errors";
 
@@ -169,11 +170,15 @@ export const handleStatusChange = (
             legalData: {
               has: messageWithContent.content.legal_data != null
             },
-            payment: {
+            payment: withoutUndefinedValues({
+              due_date:
+                messageWithContent.content.payment_data != null
+                  ? messageWithContent.content.due_date
+                  : undefined,
               has: messageWithContent.content.payment_data != null,
               notice_number:
                 messageWithContent.content.payment_data?.notice_number
-            },
+            }),
             thirdParty: {
               has: messageWithContent.content.third_party_data != null,
               has_attachments:

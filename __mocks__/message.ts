@@ -12,6 +12,8 @@ import { FiscalCode, NonEmptyString } from "@pagopa/ts-commons/lib/strings";
 import * as E from "fp-ts/lib/Either";
 import { RetrievedMessageStatusWithFiscalCode } from "../utils/message_view";
 
+export const now = new Date();
+
 export const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
 export const aMessageId = "A_MESSAGE_ID" as NonEmptyString;
 
@@ -43,6 +45,16 @@ export const aMessageContent = E.getOrElseW(() => {
     subject: "test".repeat(10)
   })
 );
+
+export const aMessageContentWithDueDate = E.getOrElseW(() => {
+  throw new Error();
+})(
+  MessageContent.decode({
+    markdown: aMessageBodyMarkdown,
+    subject: "test".repeat(10),
+    due_date: now
+  })
+);
 export const aMessageStatus: RetrievedMessageStatusWithFiscalCode = {
   ...cosmosMetadata,
   messageId: aMessageId,
@@ -72,7 +84,7 @@ export const aStatus: Status = {
 
 export const aMessageView: MessageView = {
   components: aComponents,
-  createdAt: new Date(),
+  createdAt: now,
   fiscalCode: aFiscalCode,
   id: aMessageId,
   messageTitle: "a-msg-title" as NonEmptyString,
