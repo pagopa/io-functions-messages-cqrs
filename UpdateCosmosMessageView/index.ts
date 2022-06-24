@@ -2,20 +2,21 @@ import { createBlobService } from "azure-storage";
 
 import { Context } from "@azure/functions";
 
-import { NonEmptyString } from "@pagopa/ts-commons/lib/strings";
+import { QueueClient } from "@azure/storage-queue";
 import {
   MessageModel,
   MESSAGE_COLLECTION_NAME
 } from "@pagopa/io-functions-commons/dist/src/models/message";
 import {
-  MESSAGE_VIEW_COLLECTION_NAME,
-  MessageViewModel
+  MessageViewModel,
+  MESSAGE_VIEW_COLLECTION_NAME
 } from "@pagopa/io-functions-commons/dist/src/models/message_view";
-import { QueueClient } from "@azure/storage-queue";
+import { NonEmptyString } from "@pagopa/ts-commons/lib/strings";
+import { initTelemetryClient } from "../utils/appinsights";
 import { getConfigOrThrow } from "../utils/config";
 import { cosmosdbInstance } from "../utils/cosmosdb";
-import { initTelemetryClient } from "../utils/appinsights";
-import { handle, IStorableError } from "./handler";
+import { IStorableError } from "../utils/storable_error";
+import { handle } from "./handler";
 
 const config = getConfigOrThrow();
 
