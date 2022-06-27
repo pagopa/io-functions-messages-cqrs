@@ -18,6 +18,7 @@ import { getConfigOrThrow } from "../utils/config";
 import { cosmosdbInstance } from "../utils/cosmosdb";
 import { Failure } from "../utils/errors";
 import { avroMessageFormatter } from "../utils/formatter/messagesAvroFormatter";
+import { IBulkOperationResult } from "../utils/publish";
 import { handleMessageChange } from "./handler";
 
 // eslint-disable-next-line functional/no-let
@@ -69,7 +70,7 @@ const messageContentBlobService = createBlobService(
 const run = async (
   context: Context,
   documents: ReadonlyArray<unknown>
-): Promise<Failure | string> => {
+): Promise<Failure | IBulkOperationResult> => {
   logger = context.log;
   return handleMessageChange(messageModel, messageContentBlobService)(
     kafkaClient,
