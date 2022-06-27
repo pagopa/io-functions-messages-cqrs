@@ -34,7 +34,9 @@ export const storeAndLogError = <T>(
   queueClient: QueueClient,
   telemetryClient: TelemetryClient,
   cqrsLogName: string
-) => (processingError: IStorableError<T>): TE.TaskEither<Error, void> =>
+) => (
+  processingError: IStorableError<T | unknown>
+): TE.TaskEither<Error, void> =>
   pipe(
     processingError,
     storeError(queueClient),
@@ -66,7 +68,9 @@ export const storeAndLogErrorOrThrow = <T>(
   queueClient: QueueClient,
   telemetryClient: TelemetryClient,
   cqrsLogName: string
-) => (error: IStorableError<T>): TE.TaskEither<IStorableError<T>, void> =>
+) => (
+  error: IStorableError<T | unknown>
+): TE.TaskEither<IStorableError<T | unknown>, void> =>
   pipe(
     TE.right(error),
     TE.chainFirst(storeAndLogError(queueClient, telemetryClient, cqrsLogName)),

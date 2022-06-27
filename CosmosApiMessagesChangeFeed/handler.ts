@@ -1,5 +1,6 @@
 import { BlobService } from "azure-storage";
 
+import * as B from "fp-ts/lib/boolean";
 import * as E from "fp-ts/lib/Either";
 import { flow, pipe } from "fp-ts/lib/function";
 import * as T from "fp-ts/lib/Task";
@@ -17,9 +18,10 @@ import { errorsToError } from "../utils/conversions";
 import {
   Failure,
   toPermanentFailure,
-  toTransientFailure
+  toTransientFailure,
+  TransientFailure
 } from "../utils/errors";
-import { publish } from "../utils/publish";
+import { IBulkOperationResult, publish } from "../utils/publish";
 import { IStorableError, toStorableError } from "../utils/storable_error";
 
 const CHUNK_SIZE = 15;
@@ -63,13 +65,12 @@ export const enrichMessagesContent = (
   blobService: BlobService
 ) => (
   messages: ReadonlyArray<RetrievedMessage>
-): TE.TaskEither<
-  ReadonlyArray<IStorableError<RetrievedMessage>>,
-  ReadonlyArray<RetrievedMessage>
+): T.Task<
+  ReadonlyArray<E.Either<IStorableError<RetrievedMessage>, RetrievedMessage>>
 > =>
   pipe(
     messages,
-    // split execution in chunks of 'mesageContentChunkSize'
+    // split execution in chunks of 'messageContentChunkSize'
     RA.chunksOf(messageContentChunkSize),
     RA.map(
       flow(
@@ -84,16 +85,7 @@ export const enrichMessagesContent = (
     ),
     // call chunk tasks sequentially
     RA.sequence(T.ApplicativeSeq),
-    T.map(RA.flatten),
-    T.map(mess => ({ errors: RA.lefts(mess), rights: RA.rights(mess) })),
-    TE.fromTask,
-    TE.chain(({ errors, rights }) =>
-      pipe(
-        errors,
-        TE.left,
-        TE.map(_ => rights)
-      )
-    )
+    T.map(RA.flatten)
   );
 
 export const handleMessageChange = (
@@ -105,7 +97,7 @@ export const handleMessageChange = (
   telemetryClient: TelemetryClient,
   cqrsLogName: string,
   documents: ReadonlyArray<unknown>
-): Promise<Failure | string> =>
+): Promise<Failure | IBulkOperationResult> =>
   pipe(
     documents,
     RA.map(m =>
@@ -113,11 +105,7 @@ export const handleMessageChange = (
         m,
         RetrievedMessage.decode,
         E.mapLeft(
-          flow(
-            errorsToError,
-            e => toPermanentFailure(e)(),
-            toStorableError(m as RetrievedMessage)
-          )
+          flow(errorsToError, e => toPermanentFailure(e)(), toStorableError(m))
         )
       )
     ),
@@ -125,12 +113,24 @@ export const handleMessageChange = (
       pipe(
         retrievedMessages,
         RA.rights,
+        RA.filter(msg => msg.isPending === false),
         enrichMessagesContent(messageModel, CHUNK_SIZE, blobService),
-        TE.mapLeft(failures => [
-          ...failures,
-          ...pipe(retrievedMessages, RA.lefts)
+        T.map(enrichResults => [
+          ...pipe(retrievedMessages, RA.filter(E.isLeft)),
+          ...enrichResults
         ])
       ),
     publish(client, errorStorage, telemetryClient, cqrsLogName),
+    TE.mapLeft(failure =>
+      pipe(
+        TransientFailure.is(failure),
+        B.fold(
+          () => failure,
+          () => {
+            throw new Error(failure.reason);
+          }
+        )
+      )
+    ),
     TE.toUnion
   )();

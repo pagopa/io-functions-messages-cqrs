@@ -1,23 +1,20 @@
 import * as t from "io-ts";
 
-import * as O from "fp-ts/lib/Option";
-import * as RA from "fp-ts/lib/ReadonlyArray";
-import * as TE from "fp-ts/lib/TaskEither";
 import * as E from "fp-ts/lib/Either";
+import * as O from "fp-ts/lib/Option";
+import * as TE from "fp-ts/lib/TaskEither";
 
-import { handleMessageChange } from "../handler";
+import * as KP from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaProducerCompact";
 import {
   MessageModel,
   RetrievedMessage
 } from "@pagopa/io-functions-commons/dist/src/models/message";
-import { Producer, ProducerRecord, RecordMetadata } from "kafkajs";
-import { KafkaProducerCompact } from "../../utils/kafka/KafkaProducerCompact";
 import { pipe } from "fp-ts/lib/function";
-import { TableClient, TableInsertEntityHeaders } from "@azure/data-tables";
 import {
-  aGenericContent,
+  aMessageContent,
   aRetrievedMessageWithoutContent
-} from "../../__mocks__/messages.mock";
+} from "../../__mocks__/message";
+import { handleMessageChange } from "../handler";
 
 // ----------------------
 // Variables
@@ -37,60 +34,44 @@ const aListOfRightMessages = pipe(
 // Mocks
 // ----------------------
 
+const mockAppinsights = {
+  trackEvent: jest.fn().mockReturnValue(void 0)
+} as any;
+
+const mockQueueClient = {
+  sendMessage: jest.fn().mockImplementation(() => Promise.resolve(void 0))
+} as any;
+
 const getContentFromBlobMock = jest
   .fn()
-  .mockImplementation(() => TE.of(O.some(aGenericContent)));
+  .mockImplementation(() => TE.of(O.some(aMessageContent)));
 
 const mockMessageModel = ({
   getContentFromBlob: getContentFromBlobMock
 } as any) as MessageModel;
 
-const producerMock = {
-  connect: jest.fn(async () => void 0),
-  disconnect: jest.fn(async () => void 0),
-  send: jest.fn(async (pr: ProducerRecord) =>
-    pipe(
-      pr.messages,
-      RA.map(
-        __ =>
-          ({
-            errorCode: 0,
-            partition: 1,
-            topicName: pr.topic
-          } as RecordMetadata)
-      )
-    )
-  ),
-  sendBatch: jest.fn(async _ => {
-    [] as ReadonlyArray<RecordMetadata>;
-  })
-};
-
-const mockKafkaProducerKompact: KafkaProducerCompact<RetrievedMessage> = () => ({
-  producer: (producerMock as unknown) as Producer,
+const mockKafkaProducerKompact: KP.KafkaProducerCompact<RetrievedMessage> = () => ({
+  producer: {} as any,
   topic: { topic }
 });
 
-const createEntityMock = jest.fn(
-  async (_entity, _options) => ({} as TableInsertEntityHeaders)
-);
-const tableClient: TableClient = ({
-  createEntity: createEntityMock
-} as unknown) as TableClient;
+const kafkaSendMessagesMock = jest.fn().mockImplementation(TE.of);
+jest.spyOn(KP, "sendMessages").mockImplementation(_ => kafkaSendMessagesMock);
 
 // ----------------------
 // Tests
 // ----------------------
 
-beforeEach(() => jest.clearAllMocks());
-
 describe("CosmosApiMessagesChangeFeed", () => {
+  beforeEach(() => jest.clearAllMocks());
   it("should send all retrieved messages", async () => {
     const handler = handleMessageChange(mockMessageModel, {} as any);
 
     const res = await handler(
       mockKafkaProducerKompact,
-      tableClient,
+      mockQueueClient,
+      mockAppinsights,
+      "",
       aListOfRightMessages
     );
 
@@ -98,21 +79,22 @@ describe("CosmosApiMessagesChangeFeed", () => {
       aListOfRightMessages.length
     );
 
-    expect(tableClient.createEntity).not.toHaveBeenCalled();
+    expect(mockQueueClient.sendMessage).not.toHaveBeenCalled();
     expect(res).toMatchObject(
       expect.objectContaining({
-        isSuccess: true,
-        result: `Documents sent (${aListOfRightMessages.length}). No decoding errors.`
+        results: `Documents sent (${aListOfRightMessages.length}).`
       })
     );
   });
 
-  it("should enrich only non-pending messages", async () => {
+  it("should call sendMessages with empty array of all messages are pending", async () => {
     const handler = handleMessageChange(mockMessageModel, {} as any);
 
     const res = await handler(
       mockKafkaProducerKompact,
-      tableClient,
+      mockQueueClient,
+      mockAppinsights,
+      "",
       aListOfRightMessages.map(m => ({
         ...m,
         isPending: true
@@ -121,17 +103,43 @@ describe("CosmosApiMessagesChangeFeed", () => {
 
     expect(mockMessageModel.getContentFromBlob).not.toHaveBeenCalled();
 
-    expect(tableClient.createEntity).not.toHaveBeenCalled();
+    expect(mockQueueClient.sendMessage).not.toHaveBeenCalled();
     expect(res).toMatchObject(
       expect.objectContaining({
-        isSuccess: true,
-        result: `Documents sent (${aListOfRightMessages.length}). No decoding errors.`
+        results: `Documents sent (${aListOfRightMessages.length}).`
+      })
+    );
+  });
+
+  it("should send only non pending messages", async () => {
+    const handler = handleMessageChange(mockMessageModel, {} as any);
+
+    const res = await handler(
+      mockKafkaProducerKompact,
+      mockQueueClient,
+      mockAppinsights,
+      "",
+      [
+        ...aListOfRightMessages,
+        { ...aRetrievedMessageWithoutContent, isPending: true }
+      ]
+    );
+
+    expect(mockMessageModel.getContentFromBlob).toHaveBeenCalledTimes(
+      aListOfRightMessages.length
+    );
+
+    expect(mockQueueClient.sendMessage).not.toHaveBeenCalled();
+    expect(res).toMatchObject(
+      expect.objectContaining({
+        results: `Documents sent (${aListOfRightMessages.length}).`
       })
     );
   });
 });
 
 describe("CosmosApiMessagesChangeFeed - Errors", () => {
+  beforeEach(() => jest.clearAllMocks());
   it.each`
     getContentResult
     ${TE.left(Error("An error occurred"))}
@@ -145,7 +153,9 @@ describe("CosmosApiMessagesChangeFeed - Errors", () => {
 
       const res = await handler(
         mockKafkaProducerKompact,
-        tableClient,
+        mockQueueClient,
+        mockAppinsights,
+        "",
         aListOfRightMessages
       );
 
@@ -153,12 +163,11 @@ describe("CosmosApiMessagesChangeFeed - Errors", () => {
         aListOfRightMessages.length
       );
 
-      expect(tableClient.createEntity).toHaveBeenCalledTimes(1);
+      expect(mockQueueClient.sendMessage).toHaveBeenCalledTimes(1);
       expect(res).toMatchObject(
         expect.objectContaining({
-          isSuccess: true,
-          result: `Documents sent (${aListOfRightMessages.length -
-            1}). No decoding errors.`
+          errors: `Processed (1) errors`,
+          results: `Documents sent (${aListOfRightMessages.length - 1}).`
         })
       );
     }
@@ -167,20 +176,23 @@ describe("CosmosApiMessagesChangeFeed - Errors", () => {
   it("should send only decoded retrieved messages", async () => {
     const handler = handleMessageChange(mockMessageModel, {} as any);
 
-    const res = await handler(mockKafkaProducerKompact, tableClient, [
-      ...aListOfRightMessages,
-      { error: "error" }
-    ]);
+    const res = await handler(
+      mockKafkaProducerKompact,
+      mockQueueClient,
+      mockAppinsights,
+      "",
+      [...aListOfRightMessages, { error: "error" }]
+    );
 
     expect(mockMessageModel.getContentFromBlob).toHaveBeenCalledTimes(
       aListOfRightMessages.length
     );
 
-    expect(tableClient.createEntity).toHaveBeenCalledTimes(1);
+    expect(mockQueueClient.sendMessage).toHaveBeenCalledTimes(1);
     expect(res).toMatchObject(
       expect.objectContaining({
-        isSuccess: false,
-        result: `Documents sent (${aListOfRightMessages.length}). Error decoding some documents. Check storage table errors for details.`
+        errors: `Processed (1) errors`,
+        results: `Documents sent (${aListOfRightMessages.length}).`
       })
     );
   });
