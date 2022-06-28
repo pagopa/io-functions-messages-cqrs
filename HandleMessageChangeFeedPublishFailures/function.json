@@ -1,0 +1,25 @@
+{
+  "bindings": [
+    {
+      "type": "queueTrigger",
+      "direction": "in",
+      "name": "messagepublishfailure",
+      "queueName": "%MESSAGE_PUBLISH_FAILURE_QUEUE_NAME%",
+      "connection":"INTERNAL_STORAGE_CONNECTION_STRING"
+    },
+    {
+      "type": "eventHub",
+      "name": "messages",
+      "eventHubName": "%MESSAGES_TOPIC_NAME%",
+      "connection": "MESSAGES_TOPIC_CONNECTION_STRING",
+      "direction": "out"
+  }
+  ],
+  "retry": {
+    "strategy": "exponentialBackoff",
+    "maxRetryCount": 5,
+    "minimumInterval": "00:00:05",
+    "maximumInterval": "00:30:00"
+  },
+  "scriptFile": "../dist/HandleMessageChangeFeedPublishFailures/index.js"
+}

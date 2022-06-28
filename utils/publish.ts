@@ -6,7 +6,7 @@ import * as TA from "fp-ts/lib/Task";
 import * as TE from "fp-ts/lib/TaskEither";
 import * as RA from "fp-ts/ReadonlyArray";
 import { TelemetryClient } from "./appinsights";
-import { Failure, toPermanentFailure, TransientFailure } from "./errors";
+import { Failure, toTransientFailure, TransientFailure } from "./errors";
 import { IStorableError, storeAndLogError } from "./storable_error";
 
 export interface IBulkOperationResult {
@@ -48,7 +48,7 @@ export const publish = <T>(
               errors,
               RA.map(storeAndLogError(errorStorage, telemetryClient, logName)),
               RA.sequence(TE.ApplicativeSeq),
-              TE.mapLeft(e => toPermanentFailure(e)()),
+              TE.mapLeft(e => toTransientFailure(e)()),
               TE.map(() => ({
                 errors: `Processed (${errors.length}) errors`,
                 results

@@ -18,9 +18,9 @@ import {
   RetrievedMessageWithContent
 } from "@pagopa/io-functions-commons/dist/src/models/message";
 
+import { MessageFormatter } from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaTypes";
 import { message as avroMessage } from "../../generated/avro/dto/message";
 import { MessageContentType } from "../../generated/avro/dto/MessageContentTypeEnum";
-import { MessageFormatter } from "../kafka/KafkaTypes";
 
 interface IMessageCategoryMapping {
   readonly tag: MessageContentType;
@@ -103,8 +103,8 @@ export const buildAvroMessagesObject = (
     };
   };
 
-export const avroMessageFormatter = (): // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-MessageFormatter<RetrievedMessage> => message => ({
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export const avroMessageFormatter = (): MessageFormatter<RetrievedMessage> => message => ({
   key: message.id,
   value: avro.Type.forSchema(
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion

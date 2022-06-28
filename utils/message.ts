@@ -15,7 +15,7 @@ import { IStorableError, toStorableError } from "../utils/storable_error";
 /**
  * Retrieve a message content from blob storage and enrich message
  */
-const enrichMessageContent = (
+export const enrichMessageContent = (
   messageModel: MessageModel,
   blobService: BlobService,
   message: RetrievedMessage
