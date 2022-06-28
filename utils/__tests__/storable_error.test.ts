@@ -12,6 +12,8 @@ const dummyStorableError = {
   retriable: true
 };
 
+const cqrsLogName = "logName";
+
 const mockAppinsights = {
   trackEvent: jest.fn().mockReturnValue(void 0)
 };
@@ -24,14 +26,14 @@ describe("storeAndLogError", () => {
     jest.clearAllMocks();
   });
 
-  it("GIVEN a working table storage client WHEN an error is stored THEN a new entity in the table is created and an event is tracked", async () => {
+  it("GIVEN a working queue storage client WHEN an error is stored THEN a new entity in the table is created and an event is tracked", async () => {
     mockQueueClient.sendMessage.mockImplementationOnce(() =>
       Promise.resolve(true)
     );
     const result = await storeAndLogError(
       mockQueueClient as any,
       mockAppinsights as any,
-      ""
+      cqrsLogName
     )(dummyStorableError)();
 
     expect(E.isRight(result)).toBeTruthy();
@@ -45,19 +47,19 @@ describe("storeAndLogError", () => {
     );
     expect(mockAppinsights.trackEvent).toBeCalledWith(
       expect.objectContaining({
-        name: "trigger.messages.cqrs.updatemessageview.failed"
+        name: `trigger.messages.cqrs.${cqrsLogName}.failed`
       })
     );
   });
 
-  it("GIVEN a not wroking table storage client WHEN an error is stored THEN no entities are created and an event is tracked", async () => {
+  it("GIVEN a not wroking queue storage client WHEN an error is stored THEN no entities are created and an event is tracked", async () => {
     mockQueueClient.sendMessage.mockImplementationOnce(() =>
       Promise.reject(new Error("createEntity failed"))
     );
     const result = await storeAndLogError(
       mockQueueClient as any,
       mockAppinsights as any,
-      ""
+      cqrsLogName
     )(dummyStorableError)();
 
     expect(E.isLeft(result)).toBeTruthy();
@@ -71,8 +73,7 @@ describe("storeAndLogError", () => {
     );
     expect(mockAppinsights.trackEvent).toBeCalledWith(
       expect.objectContaining({
-        name:
-          "trigger.messages.cqrs.updatemessageview.failedwithoutstoringerror"
+        name: `trigger.messages.cqrs.${cqrsLogName}.failedwithoutstoringerror`
       })
     );
   });

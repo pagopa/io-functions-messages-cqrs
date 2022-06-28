@@ -106,7 +106,7 @@ describe("CosmosApiMessagesChangeFeed", () => {
     expect(mockQueueClient.sendMessage).not.toHaveBeenCalled();
     expect(res).toMatchObject(
       expect.objectContaining({
-        results: `Documents sent (${aListOfRightMessages.length}).`
+        results: `Documents sent (0).`
       })
     );
   });
