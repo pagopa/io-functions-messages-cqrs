@@ -19,7 +19,7 @@ const messageViewModel = new MessageViewModel(
 
 const queueClient = new QueueClient(
   config.INTERNAL_STORAGE_CONNECTION_STRING,
-  config.MESSAGE_VIEW_UPDATE_FAILURE_QUEUE_NAME
+  config.MESSAGE_VIEW_PAYMENT_UPDATE_FAILURE_QUEUE_NAME
 );
 
 const telemetryClient = initTelemetryClient(

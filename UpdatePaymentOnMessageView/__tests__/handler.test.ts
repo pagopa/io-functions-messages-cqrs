@@ -1,24 +1,43 @@
-import { MessageStatusValueEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/MessageStatusValue";
+import { Context } from "@azure/functions";
+import { PaymentNoticeNumber } from "@pagopa/io-functions-commons/dist/generated/definitions/PaymentNoticeNumber";
 import * as TE from "fp-ts/TaskEither";
 import { toPermanentFailure, TransientFailure } from "../../utils/errors";
 import * as mw from "../../utils/message_view";
-import { aMessageStatus } from "../../__mocks__/message";
+import { PaymentUpdate } from "../../utils/message_view";
+import { aMessageView } from "../../__mocks__/message";
 import { handle } from "../handler";
 
+const getFunctionContextWithRetryContext = (
+  retryCount: number = 1,
+  maxRetryCount: number = 10
+) =>
+  (({
+    log: {
+      error: jest.fn()
+    },
+    executionContext: {
+      retryContext: {
+        retryCount,
+        maxRetryCount
+      }
+    }
+  } as unknown) as Context);
+
 const mockAppinsights = {
-  trackEvent: jest.fn().mockReturnValue(void 0)
+  trackEvent: jest.fn().mockReturnValue(void 0),
+  trackException: jest.fn().mockReturnValue(void 0)
 };
 
 const mockQueueClient = {
   sendMessage: jest.fn().mockImplementation(() => Promise.resolve(void 0))
 };
 
-const handleStatusChangeUtilityMock = jest
+const handlePaymentChangeUtilityMock = jest
   .fn()
   .mockImplementation(() => TE.of(void 0));
 jest
-  .spyOn(mw, "handleStatusChange")
-  .mockImplementation(() => handleStatusChangeUtilityMock);
+  .spyOn(mw, "handlePaymentChange")
+  .mockImplementation(() => handlePaymentChangeUtilityMock);
 
 const anyParam = {} as any;
 
@@ -27,100 +46,138 @@ const aTransientFailure: TransientFailure = {
   reason: "aReason"
 };
 
+const aPaymentUpdate: PaymentUpdate = {
+  fiscalCode: aMessageView.fiscalCode,
+  messageId: aMessageView.id,
+  paid: true,
+  noticeNumber: "011111111111111111" as PaymentNoticeNumber
+};
+
 describe("handle", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("GIVEN a malformed messageStatus WHEN decoding input THEN it should return a not retriable Error", async () => {
+  it("GIVEN a malformed payment update WHEN decoding input THEN it should return a not retriable Error", async () => {
     const result = await handle(
+      getFunctionContextWithRetryContext(),
       mockAppinsights as any,
       mockQueueClient as any,
       anyParam,
-      anyParam,
-      anyParam,
-      { ...aMessageStatus, fiscalCode: undefined }
+      { fiscalCode: undefined }
     );
 
     expect(mockQueueClient.sendMessage).toHaveBeenCalled();
     expect(mockAppinsights.trackEvent).toHaveBeenCalled();
     expect(mockAppinsights.trackEvent).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: "trigger.messages.cqrs.updatemessageview.failed"
+        name: "trigger.messages.cqrs.updatepaymentmessageview.failed"
       })
     );
     expect(result).toEqual(
       expect.objectContaining({
-        body: { ...aMessageStatus, fiscalCode: undefined },
+        body: { fiscalCode: undefined },
         retriable: false
       })
     );
   });
 
-  it("GIVEN a messageStatus WHEN handleStatusChange returns a transient failure THEN it should return a retriable Error", async () => {
-    handleStatusChangeUtilityMock.mockImplementationOnce(() =>
+  it("GIVEN a payment update WHEN handlePaymentChange returns a transient failure and retry count has reached max retry count THEN it should return a retriable Error", async () => {
+    handlePaymentChangeUtilityMock.mockImplementationOnce(() =>
       TE.left(aTransientFailure)
     );
+
     const result = await handle(
+      getFunctionContextWithRetryContext(10, 10),
       mockAppinsights as any,
       mockQueueClient as any,
       anyParam,
-      anyParam,
-      anyParam,
-      aMessageStatus
+      aPaymentUpdate
     );
 
     expect(mockQueueClient.sendMessage).toHaveBeenCalled();
     expect(mockAppinsights.trackEvent).toHaveBeenCalled();
     expect(mockAppinsights.trackEvent).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: "trigger.messages.cqrs.updatemessageview.failed"
+        name: "trigger.messages.cqrs.updatepaymentmessageview.failed"
       })
     );
+
+    console.log(result);
     expect(result).toEqual(
       expect.objectContaining({
-        body: aMessageStatus,
+        body: aPaymentUpdate,
         retriable: true
       })
     );
   });
 
-  it("GIVEN a messageStatus WHEN handleStatusChange returns a permanent failure THEN it should return a not retriable Error", async () => {
-    handleStatusChangeUtilityMock.mockImplementationOnce(() =>
+  it("GIVEN a payment update WHEN handlePaymentChange returns a transient failure and retry count has not reached max retry count THEN it should throw an Error", async () => {
+    handlePaymentChangeUtilityMock.mockImplementationOnce(() =>
+      TE.left(aTransientFailure)
+    );
+
+    await expect(
+      handle(
+        getFunctionContextWithRetryContext(),
+        mockAppinsights as any,
+        mockQueueClient as any,
+        anyParam,
+        aPaymentUpdate
+      )
+    ).rejects.toBeDefined();
+
+    expect(mockQueueClient.sendMessage).not.toHaveBeenCalled();
+    expect(mockAppinsights.trackEvent).not.toHaveBeenCalled();
+    expect(mockAppinsights.trackException).toHaveBeenCalled();
+
+    expect(mockAppinsights.trackException).toHaveBeenCalledWith(
+      expect.objectContaining({
+        properties: {
+          detail: "TRANSIENT",
+          fatal: "false",
+          isSuccess: "false",
+          modelId: "",
+          name: "message.view.paymentupdate.failure"
+        }
+      })
+    );
+  });
+
+  it("GIVEN a payment update WHEN handlePaymentChange returns a permanent failure THEN it should return a not retriable Error", async () => {
+    handlePaymentChangeUtilityMock.mockImplementationOnce(() =>
       TE.left(toPermanentFailure(Error("PERMANENT")))
     );
     const result = await handle(
+      getFunctionContextWithRetryContext(),
       mockAppinsights as any,
       mockQueueClient as any,
       anyParam,
-      anyParam,
-      anyParam,
-      aMessageStatus
+      aPaymentUpdate
     );
 
     expect(mockQueueClient.sendMessage).toHaveBeenCalled();
     expect(mockAppinsights.trackEvent).toHaveBeenCalled();
     expect(mockAppinsights.trackEvent).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: "trigger.messages.cqrs.updatemessageview.failed"
+        name: "trigger.messages.cqrs.updatepaymentmessageview.failed"
       })
     );
     expect(result).toEqual(
       expect.objectContaining({
-        body: aMessageStatus,
+        body: aPaymentUpdate,
         retriable: false
       })
     );
   });
 
-  it("GIVEN a messageStatus WHEN handleStatusChange returns void THEN it should return void without store any error", async () => {
+  it("GIVEN a payment update WHEN handlePaymentChange returns void THEN it should return void without store any error", async () => {
     const result = await handle(
+      getFunctionContextWithRetryContext(),
       mockAppinsights as any,
       mockQueueClient as any,
       anyParam,
-      anyParam,
-      anyParam,
-      aMessageStatus
+      aPaymentUpdate
     );
 
     expect(mockQueueClient.sendMessage).not.toHaveBeenCalled();
@@ -128,23 +185,8 @@ describe("handle", () => {
     expect(result).toEqual(void 0);
   });
 
-  it("GIVEN a messageStatus WHEN status is not PROCESSED THEN it should return void without store any error", async () => {
-    const result = await handle(
-      mockAppinsights as any,
-      mockQueueClient as any,
-      anyParam,
-      anyParam,
-      anyParam,
-      { ...aMessageStatus, status: MessageStatusValueEnum.FAILED }
-    );
-
-    expect(mockQueueClient.sendMessage).not.toHaveBeenCalled();
-    expect(mockAppinsights.trackEvent).not.toHaveBeenCalled();
-    expect(result).toEqual(void 0);
-  });
-
-  it("GIVEN a messageStatus WHEN handleStatusChange returns a transient failure and error queue storage is not working THEN it should throw an error", async () => {
-    handleStatusChangeUtilityMock.mockImplementationOnce(() =>
+  it("GIVEN a payment update WHEN handlePaymentChange returns a transient failure and error queue storage is not working THEN it should throw an error", async () => {
+    handlePaymentChangeUtilityMock.mockImplementationOnce(() =>
       TE.left(aTransientFailure)
     );
     const aCreationError = new Error("createEntity failed");
@@ -154,21 +196,20 @@ describe("handle", () => {
 
     await expect(
       handle(
+        getFunctionContextWithRetryContext(10, 10),
         mockAppinsights as any,
         mockQueueClient as any,
         anyParam,
-        anyParam,
-        anyParam,
-        aMessageStatus
+        aPaymentUpdate
       )
-    ).rejects.toEqual(aCreationError);
+    ).rejects.toBeDefined();
 
     expect(mockQueueClient.sendMessage).toHaveBeenCalled();
     expect(mockAppinsights.trackEvent).toHaveBeenCalled();
     expect(mockAppinsights.trackEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         name:
-          "trigger.messages.cqrs.updatemessageview.failedwithoutstoringerror"
+          "trigger.messages.cqrs.updatepaymentmessageview.failedwithoutstoringerror"
       })
     );
   });
