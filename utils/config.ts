@@ -93,6 +93,8 @@ export const KafkaProducerCompactConfigFromEnv = new t.Type<
 export type IDecodableConfig = t.TypeOf<typeof IDecodableConfig>;
 // eslint-disable-next-line @typescript-eslint/ban-types
 export const IDecodableConfig = t.interface({
+  APIM_BASE_URL: NonEmptyString,
+  APIM_SUBSCRIPTION_KEY: NonEmptyString,
   APPINSIGHTS_INSTRUMENTATIONKEY: NonEmptyString,
 
   AzureWebJobsStorage: NonEmptyString,
