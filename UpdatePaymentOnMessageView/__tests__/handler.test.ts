@@ -82,13 +82,13 @@ describe("handle", () => {
     );
   });
 
-  it("GIVEN a payment update WHEN handlePaymentChange returns a transient failure and retry count has reached max retry count THEN it should return a retriable Error", async () => {
+  it("GIVEN a payment update WHEN handlePaymentChange returns a transient failure and retry count has reached retry cap count THEN it should return a retriable Error", async () => {
     handlePaymentChangeUtilityMock.mockImplementationOnce(() =>
       TE.left(aTransientFailure)
     );
 
     const result = await handle(
-      getFunctionContextWithRetryContext(10, 10),
+      getFunctionContextWithRetryContext(5, 10),
       mockAppinsights as any,
       mockQueueClient as any,
       anyParam,
@@ -112,7 +112,7 @@ describe("handle", () => {
     );
   });
 
-  it("GIVEN a payment update WHEN handlePaymentChange returns a transient failure and retry count has not reached max retry count THEN it should throw an Error", async () => {
+  it("GIVEN a payment update WHEN handlePaymentChange returns a transient failure and retry count has not reached retry cap count THEN it should throw an Error", async () => {
     handlePaymentChangeUtilityMock.mockImplementationOnce(() =>
       TE.left(aTransientFailure)
     );

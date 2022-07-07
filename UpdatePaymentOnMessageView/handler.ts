@@ -3,6 +3,7 @@ import { Context } from "@azure/functions";
 import { QueueClient } from "@azure/storage-queue";
 import { MessageViewModel } from "@pagopa/io-functions-commons/dist/src/models/message_view";
 import { constVoid, flow, pipe } from "fp-ts/lib/function";
+import * as O from "fp-ts/Option";
 import * as TE from "fp-ts/TaskEither";
 import { TelemetryClient, trackException } from "../utils/appinsights";
 import { errorsToError } from "../utils/conversions";
@@ -17,6 +18,14 @@ import {
   storeAndLogErrorOrThrow,
   toStorableError
 } from "../utils/storable_error";
+
+const hasReachedRetryCap = (context: Context): boolean =>
+  pipe(
+    context.executionContext.retryContext,
+    O.fromNullable,
+    O.map(retryCtx => retryCtx.retryCount < retryCtx.maxRetryCount - 5),
+    O.getOrElseW(() => true)
+  );
 
 export const handle = (
   context: Context,
@@ -50,11 +59,7 @@ export const handle = (
         tagOverrides: { samplingEnabled: String(isTransient) }
       });
       context.log.error(error);
-      if (
-        isTransient &&
-        context.executionContext.retryContext?.retryCount !==
-          context.executionContext.retryContext?.maxRetryCount
-      ) {
+      if (isTransient && hasReachedRetryCap(context)) {
         // Trigger a retry in case of temporary failures
         throw new Error(error);
       }
