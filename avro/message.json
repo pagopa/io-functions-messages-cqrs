@@ -5,6 +5,12 @@
   "doc": "Kafka JS schema for cosmos api container 'messages'",
   "fields": [
     {
+      "name": "dueDate",
+      "type": ["null","int"],
+      "logicalType": "date",
+      "default": null
+    },
+    {
       "name": "fiscalCode",
       "type": "string",
       "default": "undefined"
@@ -44,6 +50,18 @@
       "name": "content_subject",
       "type": "string",
       "default": "undefined"
+    },
+    {
+      "name": "feature_level_type",
+      "type": ["null", {
+        "type": "enum",
+        "name": "FeatureLevelType",
+        "symbols": [
+          "STANDARD",
+          "ADVANCED"
+        ]
+      }],
+      "default": null
     },
     {
       "name": "content_type",

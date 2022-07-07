@@ -18,6 +18,8 @@ import {
 } from "@pagopa/io-functions-commons/dist/src/models/message";
 
 import { MessageFormatter } from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaTypes";
+import { FeatureLevelTypeEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/FeatureLevelType";
+import { FeatureLevelType } from "../../generated/avro/dto/FeatureLevelTypeEnum";
 import { message as avroMessage } from "../../generated/avro/dto/message";
 import { MessageContentType } from "../../generated/avro/dto/MessageContentTypeEnum";
 
@@ -66,12 +68,26 @@ const getCategory = (content: MessageContent): MessageContentType =>
     O.getOrElseW(() => MessageContentType.GENERIC)
   );
 
+const mapFeatureLevelType = (
+  featureLevelTypeEnum: FeatureLevelTypeEnum
+): FeatureLevelType => {
+  switch (featureLevelTypeEnum) {
+    case FeatureLevelTypeEnum.STANDARD:
+      return FeatureLevelType.STANDARD;
+    case FeatureLevelTypeEnum.ADVANCED:
+      return FeatureLevelType.ADVANCED;
+    default:
+      return FeatureLevelType.STANDARD;
+  }
+};
+
 export const buildAvroMessagesObject = (
   retrievedMessage: RetrievedMessage
 ): Omit<avroMessage, "schema" | "subject"> => {
-  const paymentData = RetrievedMessageWithContent.is(retrievedMessage)
-    ? retrievedMessage.content.payment_data
+  const messageContent = RetrievedMessageWithContent.is(retrievedMessage)
+    ? retrievedMessage.content
     : undefined;
+  const paymentData = messageContent?.payment_data;
 
   return {
     content_paymentData_amount: paymentData?.amount ?? 0,
@@ -86,6 +102,8 @@ export const buildAvroMessagesObject = (
       ? getCategory(retrievedMessage.content)
       : null,
     createdAt: retrievedMessage.createdAt.getMilliseconds(),
+    dueDate: messageContent?.due_date?.getTime() ?? null,
+    feature_level_type: mapFeatureLevelType(retrievedMessage.featureLevelType),
     fiscalCode: retrievedMessage.fiscalCode,
     id: retrievedMessage.id,
     isPending:
