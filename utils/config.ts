@@ -18,18 +18,18 @@ import { NonEmptyString } from "@pagopa/ts-commons/lib/strings";
 
 import { KafkaProducerCompactConfig } from "@pagopa/fp-ts-kafkajs/dist/lib/IoKafkaTypes";
 
-const isRecordOfString = (i: unknown): i is Record<string, unknown> =>
+const isStringKeysRecord = (i: unknown): i is Record<string, unknown> =>
   typeof i === "object" &&
   i !== null &&
   !Object.keys(i).some(property => typeof property !== "string");
 
-const createNotRecordOfStringErrorL = (
+const createNotStringKeysRecordErrorL = (
   input: unknown,
   context: t.Context
 ) => (): t.Errors => [
   {
     context,
-    message: "input is not a valid record of string",
+    message: "input is not a valid string keys record",
     value: input
   }
 ];
@@ -77,8 +77,8 @@ export const KafkaProducerCompactConfigFromEnv = new t.Type<
     pipe(
       input,
       E.fromPredicate(
-        isRecordOfString,
-        createNotRecordOfStringErrorL(input, context)
+        isStringKeysRecord,
+        createNotStringKeysRecordErrorL(input, context)
       ),
       E.chainW(inputRecord =>
         KafkaProducerCompactConfig.validate(

@@ -57,7 +57,8 @@ export const handleMessageChange = (
     publish(client, errorStorage, telemetryClient, cqrsLogName),
     TE.mapLeft(failure =>
       pipe(
-        TransientFailure.is(failure),
+        failure,
+        TransientFailure.is,
         B.fold(
           () => failure,
           () => {

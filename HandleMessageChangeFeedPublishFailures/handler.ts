@@ -101,6 +101,5 @@ export const HandleMessageChangeFeedPublishFailureHandler = (
       }
       return err;
     }),
-    x => x,
     TE.toUnion
   )();

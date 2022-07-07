@@ -57,7 +57,7 @@ describe("HandleMessageChangeFeedPublishFailureHandler", () => {
     jest.clearAllMocks();
   });
 
-  it("shoud write an avro message on message bindings", async () => {
+  it("should write an avro message on message bindings", async () => {
     const res = await HandleMessageChangeFeedPublishFailureHandler(
       functionsContextMock,
       aRetriableInput,
@@ -77,7 +77,8 @@ describe("HandleMessageChangeFeedPublishFailureHandler", () => {
       )
     );
   });
-  it("shoud return void if everything works fine", async () => {
+
+  it("should return void if everything works fine", async () => {
     await expect(
       HandleMessageChangeFeedPublishFailureHandler(
         functionsContextMock,
@@ -90,7 +91,7 @@ describe("HandleMessageChangeFeedPublishFailureHandler", () => {
     expect(telemetryClientMock.trackException).not.toHaveBeenCalled();
   });
 
-  it("shoud throw if Transient failure occurs", async () => {
+  it("should throw if Transient failure occurs", async () => {
     getContentFromBlobMock.mockImplementationOnce(() =>
       TE.left("Cannot enrich message content")
     );
@@ -110,7 +111,7 @@ describe("HandleMessageChangeFeedPublishFailureHandler", () => {
     );
   });
 
-  it("shoud return a Permanent failure if input decode fails", async () => {
+  it("should return a Permanent failure if input decode fails", async () => {
     await expect(
       HandleMessageChangeFeedPublishFailureHandler(
         functionsContextMock,
@@ -127,7 +128,7 @@ describe("HandleMessageChangeFeedPublishFailureHandler", () => {
     expect(telemetryClientMock.trackException).toHaveBeenCalled();
   });
 
-  it("shoud return a Permanent failure if input is not retriable", async () => {
+  it("should return a Permanent failure if input is not retriable", async () => {
     await expect(
       HandleMessageChangeFeedPublishFailureHandler(
         functionsContextMock,

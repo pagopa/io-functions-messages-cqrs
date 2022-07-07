@@ -72,10 +72,9 @@ export const storeAndLogErrorOrThrow = <T>(
   error: IStorableError<T | unknown>
 ): TE.TaskEither<IStorableError<T | unknown>, void> =>
   pipe(
-    TE.right(error),
-    TE.chainFirst(storeAndLogError(queueClient, telemetryClient, cqrsLogName)),
+    error,
+    storeAndLogError(queueClient, telemetryClient, cqrsLogName),
     TE.mapLeft(e => {
       throw e;
-    }),
-    TE.swap
+    })
   );

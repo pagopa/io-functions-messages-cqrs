@@ -1,4 +1,3 @@
-/* eslint-disable sort-keys */
 /* eslint-disable @typescript-eslint/naming-convention */
 import * as avro from "avsc";
 
@@ -69,39 +68,36 @@ const getCategory = (content: MessageContent): MessageContentType =>
 
 export const buildAvroMessagesObject = (
   retrievedMessage: RetrievedMessage
-): Omit<avroMessage, "schema" | "subject"> =>
-  // eslint-disable-next-line no-console, no-underscore-dangle
-  {
-    const paymentData = RetrievedMessageWithContent.is(retrievedMessage)
-      ? retrievedMessage.content.payment_data
-      : undefined;
+): Omit<avroMessage, "schema" | "subject"> => {
+  const paymentData = RetrievedMessageWithContent.is(retrievedMessage)
+    ? retrievedMessage.content.payment_data
+    : undefined;
 
-    return {
-      fiscalCode: retrievedMessage.fiscalCode,
-      senderServiceId: retrievedMessage.senderServiceId,
-      senderUserId: retrievedMessage.senderUserId,
-      id: retrievedMessage.id,
-      isPending:
-        retrievedMessage.isPending === undefined
-          ? true
-          : retrievedMessage.isPending,
+  return {
+    content_paymentData_amount: paymentData?.amount ?? 0,
+    content_paymentData_invalidAfterDueDate:
+      paymentData?.invalid_after_due_date ?? false,
+    content_paymentData_noticeNumber: paymentData?.notice_number ?? "",
+    content_paymentData_payeeFiscalCode: paymentData?.payee?.fiscal_code ?? "",
+    content_subject: RetrievedMessageWithContent.is(retrievedMessage)
+      ? retrievedMessage.content.subject
+      : "",
+    content_type: RetrievedMessageWithContent.is(retrievedMessage)
+      ? getCategory(retrievedMessage.content)
+      : null,
+    createdAt: retrievedMessage.createdAt.getMilliseconds(),
+    fiscalCode: retrievedMessage.fiscalCode,
+    id: retrievedMessage.id,
+    isPending:
+      retrievedMessage.isPending === undefined
+        ? true
+        : retrievedMessage.isPending,
+    senderServiceId: retrievedMessage.senderServiceId,
+    senderUserId: retrievedMessage.senderUserId,
 
-      content_subject: RetrievedMessageWithContent.is(retrievedMessage)
-        ? retrievedMessage.content.subject
-        : "",
-      content_type: RetrievedMessageWithContent.is(retrievedMessage)
-        ? getCategory(retrievedMessage.content)
-        : null,
-      content_paymentData_amount: paymentData?.amount ?? 0,
-      content_paymentData_noticeNumber: paymentData?.notice_number ?? "",
-      content_paymentData_invalidAfterDueDate:
-        paymentData?.invalid_after_due_date ?? false,
-      content_paymentData_payeeFiscalCode:
-        paymentData?.payee?.fiscal_code ?? "",
-      createdAt: retrievedMessage.createdAt.getMilliseconds(),
-      timeToLiveSeconds: retrievedMessage.timeToLiveSeconds
-    };
+    timeToLiveSeconds: retrievedMessage.timeToLiveSeconds
   };
+};
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const avroMessageFormatter = (): MessageFormatter<RetrievedMessage> => message => ({
