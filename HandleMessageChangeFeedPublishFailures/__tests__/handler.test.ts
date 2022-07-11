@@ -2,8 +2,10 @@ import { Context } from "@azure/functions";
 import { MessageModel } from "@pagopa/io-functions-commons/dist/src/models/message";
 import * as O from "fp-ts/lib/Option";
 import * as TE from "fp-ts/lib/TaskEither";
+import { MessageContentType } from "../../generated/avro/dto/MessageContentTypeEnum";
 import { TelemetryClient } from "../../utils/appinsights";
 import { avroMessageFormatter } from "../../utils/formatter/messagesAvroFormatter";
+import { ThirdPartyDataWithCategoryFetcher } from "../../utils/message";
 import {
   aMessageContent,
   aRetrievedMessageWithoutContent
@@ -52,6 +54,10 @@ const aNotRetriableInput: HandleMessagePublishFailureInput = {
 
 const anyParam = {} as any;
 
+const aMessageCategoryFetcher: ThirdPartyDataWithCategoryFetcher = jest.fn(
+  sId => ({ category: MessageContentType.GENERIC })
+);
+
 describe("HandleMessageChangeFeedPublishFailureHandler", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -63,32 +69,20 @@ describe("HandleMessageChangeFeedPublishFailureHandler", () => {
       aRetriableInput,
       telemetryClientMock,
       mockMessageModel,
-      anyParam
+      anyParam,
+      aMessageCategoryFetcher
     );
     expect(res).toEqual(void 0);
     expect(telemetryClientMock.trackException).not.toHaveBeenCalled();
     expect(functionsContextMock.bindings.messages).toEqual(
       JSON.stringify(
-        avroMessageFormatter()({
+        avroMessageFormatter(aMessageCategoryFetcher)({
           ...inputMessage.body,
           content: aMessageContent,
           kind: "IRetrievedMessageWithContent"
         })
       )
     );
-  });
-
-  it("should return void if everything works fine", async () => {
-    await expect(
-      HandleMessageChangeFeedPublishFailureHandler(
-        functionsContextMock,
-        aRetriableInput,
-        telemetryClientMock,
-        mockMessageModel,
-        anyParam
-      )
-    ).resolves.toEqual(void 0);
-    expect(telemetryClientMock.trackException).not.toHaveBeenCalled();
   });
 
   it("should throw if Transient failure occurs", async () => {
@@ -101,7 +95,8 @@ describe("HandleMessageChangeFeedPublishFailureHandler", () => {
         aRetriableInput,
         telemetryClientMock,
         mockMessageModel,
-        anyParam
+        anyParam,
+        aMessageCategoryFetcher
       )
     ).rejects.toBeDefined();
     expect(telemetryClientMock.trackException).toHaveBeenCalledWith(
@@ -118,7 +113,8 @@ describe("HandleMessageChangeFeedPublishFailureHandler", () => {
         { wrongInput: true },
         telemetryClientMock,
         mockMessageModel,
-        anyParam
+        anyParam,
+        aMessageCategoryFetcher
       )
     ).resolves.toEqual(
       expect.objectContaining({
@@ -135,7 +131,8 @@ describe("HandleMessageChangeFeedPublishFailureHandler", () => {
         aNotRetriableInput,
         telemetryClientMock,
         mockMessageModel,
-        anyParam
+        anyParam,
+        aMessageCategoryFetcher
       )
     ).resolves.toEqual(
       expect.objectContaining({

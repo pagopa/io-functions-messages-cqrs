@@ -33,10 +33,12 @@ export const publish = <T>(
         input,
         RA.rights,
         KP.sendMessages(client),
-        TE.mapLeft(_ =>
+        TE.mapLeft(sendFailureErrors =>
           TransientFailure.encode({
             kind: "TRANSIENT",
-            reason: "Cannot send messages on Kafka topic"
+            reason: `Cannot send messages on Kafka topic|${sendFailureErrors
+              .map(err => err.message)
+              .join("|")}`
           })
         ),
         TE.map(messagesSent => ({

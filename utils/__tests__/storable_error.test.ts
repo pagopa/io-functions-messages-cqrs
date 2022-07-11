@@ -26,7 +26,7 @@ describe("storeAndLogError", () => {
     jest.clearAllMocks();
   });
 
-  it("GIVEN a working queue storage client WHEN an error is stored THEN a new entity in the table is created and an event is tracked", async () => {
+  it("GIVEN a working queue storage client WHEN an error is stored THEN a new entity in the queue is created and an event is tracked", async () => {
     mockQueueClient.sendMessage.mockImplementationOnce(() =>
       Promise.resolve(true)
     );

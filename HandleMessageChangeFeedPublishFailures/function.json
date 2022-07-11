@@ -4,7 +4,7 @@
       "type": "queueTrigger",
       "direction": "in",
       "name": "messagepublishfailure",
-      "queueName": "%MESSAGE_PUBLISH_FAILURE_QUEUE_NAME%",
+      "queueName": "%MESSAGE_PAYMENT_UPDATER_FAILURE_QUEUE_NAME%",
       "connection":"INTERNAL_STORAGE_CONNECTION_STRING"
     },
     {

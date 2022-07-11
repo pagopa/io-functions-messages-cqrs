@@ -113,7 +113,7 @@ export const IDecodableConfig = t.interface({
   MESSAGE_STATUS_FOR_VIEW_TOPIC_PRODUCER_CONNECTION_STRING: NonEmptyString,
 
   MESSAGE_VIEW_UPDATE_FAILURE_QUEUE_NAME: NonEmptyString,
-
+  PN_SERVICE_ID: NonEmptyString,
   QueueStorageConnection: NonEmptyString,
 
   isProduction: t.boolean
