@@ -12,11 +12,7 @@ import {
 } from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model";
 import { DateFromString } from "@pagopa/ts-commons/lib/dates";
 import { NonNegativeInteger } from "@pagopa/ts-commons/lib/numbers";
-import {
-  FiscalCode,
-  NonEmptyString,
-  OrganizationFiscalCode
-} from "@pagopa/ts-commons/lib/strings";
+import { FiscalCode, NonEmptyString } from "@pagopa/ts-commons/lib/strings";
 import { withoutUndefinedValues } from "@pagopa/ts-commons/lib/types";
 import { BlobService } from "azure-storage";
 import * as E from "fp-ts/lib/Either";
@@ -69,8 +65,7 @@ export const PaymentUpdate = t.intersection([
   }),
   t.partial({
     amount: NonNegativeInteger,
-    dueDate: DateFromString,
-    payeeFiscalCode: OrganizationFiscalCode
+    dueDate: DateFromString
   })
 ]);
 

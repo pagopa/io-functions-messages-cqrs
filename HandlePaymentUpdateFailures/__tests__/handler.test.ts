@@ -1,9 +1,10 @@
 import { Context } from "@azure/functions";
 import { PaymentNoticeNumber } from "@pagopa/io-functions-commons/dist/generated/definitions/PaymentNoticeNumber";
+import { NonEmptyString } from "@pagopa/ts-commons/lib/strings";
 import * as TE from "fp-ts/lib/TaskEither";
 import * as t from "io-ts";
 import { PaymentUpdaterClient } from "../../clients/payment-updater";
-import { PaymentStatus } from "../../generated/payment-updater/PaymentStatus";
+import { ApiPaymentMessage } from "../../generated/payment-updater/ApiPaymentMessage";
 import { TelemetryClient } from "../../utils/appinsights";
 import { TransientFailure } from "../../utils/errors";
 import * as util from "../../utils/message_view";
@@ -61,8 +62,11 @@ const aTransientFailure: TransientFailure = {
 };
 const anyParam = {} as any;
 
-const aPaymentStatus: PaymentStatus = {
-  isPaid: true
+const aPaymentStatus: ApiPaymentMessage = {
+  paid: true,
+  fiscalCode: aFiscalCode.toString() as NonEmptyString,
+  messageId: aMessageStatus.messageId,
+  noticeNumber: "011111111111111111" as NonEmptyString
 };
 
 const aSuccessPaymentUpdateResponse = {
@@ -76,7 +80,7 @@ const getPaymentUpdateMock = jest
     Promise.resolve(t.success(aSuccessPaymentUpdateResponse))
   );
 const paymentUpdaterApiClientMock = {
-  getPaymentUpdate: getPaymentUpdateMock
+  getMessagePayment: getPaymentUpdateMock
 } as PaymentUpdaterClient;
 
 describe("HandlePaymentUpdateFailureHandler", () => {

@@ -7,7 +7,7 @@ import { constVoid, flow, pipe } from "fp-ts/lib/function";
 import * as TE from "fp-ts/lib/TaskEither";
 import * as t from "io-ts";
 import { PaymentUpdaterClient } from "../clients/payment-updater";
-import { PaymentStatus } from "../generated/payment-updater/PaymentStatus";
+import { ApiPaymentMessage } from "../generated/payment-updater/ApiPaymentMessage";
 import { TelemetryClient, trackException } from "../utils/appinsights";
 import { errorsToError } from "../utils/conversions";
 import {
@@ -44,16 +44,16 @@ export type HandlePaymentUpdateFailureInput = t.TypeOf<
 
 const isGetPaymentUpdateSuccess = (
   res: IResponseType<number, unknown, never>
-): res is IResponseType<200, PaymentStatus, never> => res.status === 200;
+): res is IResponseType<200, ApiPaymentMessage, never> => res.status === 200;
 const retriableStatusCodes = [404, 500, 503];
 
 const retrievePaymentUpdate = (
   paymentUpdaterApiClient: PaymentUpdaterClient,
   messageId: NonEmptyString
-): TE.TaskEither<Failure, PaymentStatus> =>
+): TE.TaskEither<Failure, PaymentUpdate> =>
   pipe(
     TE.tryCatch(
-      () => paymentUpdaterApiClient.getPaymentUpdate({ messageId }),
+      () => paymentUpdaterApiClient.getMessagePayment({ messageId }),
       E.toError
     ),
     TE.chain(flow(TE.fromEither, TE.mapLeft(errorsToError))),
@@ -67,7 +67,29 @@ const retrievePaymentUpdate = (
           : toPermanentFailure(Error("Cannot Permanent Get Payment Update"))()
       )
     ),
-    TE.map(response => response.value)
+    TE.map(response => response.value),
+    TE.map(paymentUpdate => ({
+      amount: paymentUpdate.amount,
+      dueDate: paymentUpdate.dueDate,
+      fiscalCode: paymentUpdate.fiscalCode,
+      messageId: paymentUpdate.messageId,
+      noticeNumber: paymentUpdate.noticeNumber,
+      paid: paymentUpdate.paid
+    })),
+    TE.chainW(
+      flow(
+        PaymentUpdate.decode,
+        E.mapLeft(
+          flow(errorsToError, e =>
+            toPermanentFailure(
+              e,
+              "Cannot Decode PaymentUpdate from Payment Updater"
+            )()
+          )
+        ),
+        TE.fromEither
+      )
+    )
   );
 
 export const HandlePaymentUpdateFailureHandler = (
@@ -93,16 +115,9 @@ export const HandlePaymentUpdateFailureHandler = (
       )
     ),
     TE.chain(retriableFailureBody =>
-      pipe(
-        retrievePaymentUpdate(
-          paymentUpdaterApiClient,
-          retriableFailureBody.messageId
-        ),
-        TE.map(paymentStatus => ({
-          ...retriableFailureBody,
-          dueDate: paymentStatus.dueDate,
-          paid: paymentStatus.isPaid
-        }))
+      retrievePaymentUpdate(
+        paymentUpdaterApiClient,
+        retriableFailureBody.messageId
       )
     ),
     TE.chain(handlePaymentChange(messageViewModel)),

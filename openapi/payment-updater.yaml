@@ -23,7 +23,7 @@ paths:
         '200':
           description: check if the message has been paid
           schema:
-            $ref: '#/definitions/PaymentStatus'
+            $ref: '#/definitions/ApiPaymentMessage'
         '400':
           description: Bad Request
           schema:
@@ -40,27 +40,36 @@ paths:
             $ref: '#/definitions/Problem'
       tags:
         - API  Payment
-      operationId: getPaymentUpdate
-      summary: Check Payment Update By MessageId
+      operationId: getMessagePayment
+      summary: Check Payment Message Update By MessageId
   
 definitions:
-  Timestamp:
-    type: string
-    format: UTCISODateFromString
-    description: A date-time field in ISO-8601 format and UTC timezone.
-    x-import: '@pagopa/ts-commons/lib/dates'
-    example: '2018-10-13T00:00:00.000Z'
-
-  PaymentStatus:
-    type: object
-    properties:
-      isPaid:
-        type: boolean
-        default: false
-      dueDate:
-        $ref: '#/definitions/Timestamp'
-    required:
-      - isPaid
+  ApiPaymentMessage:
+      type: object
+      properties:
+        messageId:
+          type: string
+          minLength: 1
+        paid:
+          type: boolean
+          default: false
+        dueDate:
+          type: string
+          format: date
+        amount:
+          type: number
+          format: double
+        fiscalCode:
+          type: string
+          minLength: 1
+        noticeNumber:
+          type: string
+          minLength: 1
+      required:
+        - messageId
+        - paid
+        - fiscalCode
+        - noticeNumber
   Problem:
     properties:
       error:
@@ -83,6 +92,7 @@ definitions:
           timestamp of the error
         type: number
     type: object
+
 securityDefinitions:
   SubscriptionKey:
     description: The API key to access this function app.
