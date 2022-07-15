@@ -11,7 +11,7 @@
       "leaseCollectionName": "cqrs-leases",
       "leaseCollectionPrefix": "CosmosApiMessageChangeFeedForPaymentUpdater",
       "createLeaseCollectionIfNotExists": true,
-      "startFromBeginning": true
+      "startFromBeginning": false
 
     }
   ],
