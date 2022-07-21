@@ -1,3 +1,7 @@
+import { PaymentNoticeNumber } from "@pagopa/io-functions-commons/dist/generated/definitions/PaymentNoticeNumber";
+import { PaymentStatusEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/PaymentStatus";
+import { MessageModel } from "@pagopa/io-functions-commons/dist/src/models/message";
+import { RetrievedMessageStatus } from "@pagopa/io-functions-commons/dist/src/models/message_status";
 import {
   MessageView,
   MessageViewModel
@@ -6,16 +10,16 @@ import {
   CosmosErrorResponse,
   CosmosErrors
 } from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model";
-import { pipe, flow, constVoid } from "fp-ts/lib/function";
-import { identity } from "io-ts";
-import * as TE from "fp-ts/lib/TaskEither";
-import * as E from "fp-ts/lib/Either";
-import * as t from "io-ts";
-import { MessageModel } from "@pagopa/io-functions-commons/dist/src/models/message";
-import { BlobService } from "azure-storage";
-import { FiscalCode } from "@pagopa/ts-commons/lib/strings";
-import { RetrievedMessageStatus } from "@pagopa/io-functions-commons/dist/src/models/message_status";
+import { DateFromString } from "@pagopa/ts-commons/lib/dates";
+import { NonNegativeInteger } from "@pagopa/ts-commons/lib/numbers";
+import { FiscalCode, NonEmptyString } from "@pagopa/ts-commons/lib/strings";
 import { withoutUndefinedValues } from "@pagopa/ts-commons/lib/types";
+import { BlobService } from "azure-storage";
+import * as E from "fp-ts/lib/Either";
+import { constVoid, flow, pipe } from "fp-ts/lib/function";
+import * as TE from "fp-ts/lib/TaskEither";
+import * as t from "io-ts";
+import { identity } from "io-ts";
 import { errorsToError } from "./conversions";
 import { Failure, toPermanentFailure, toTransientFailure } from "./errors";
 
@@ -51,6 +55,21 @@ export type HandleMessageViewFailureInput = t.TypeOf<
 >;
 
 type CosmosErrorResponseType = ReturnType<typeof CosmosErrorResponse>;
+
+export const PaymentUpdate = t.intersection([
+  t.interface({
+    fiscalCode: FiscalCode,
+    messageId: NonEmptyString,
+    noticeNumber: PaymentNoticeNumber,
+    paid: t.boolean
+  }),
+  t.partial({
+    amount: NonNegativeInteger,
+    dueDate: DateFromString
+  })
+]);
+
+export type PaymentUpdate = t.TypeOf<typeof PaymentUpdate>;
 
 const isCosmosErrorPreconditionResponse = (
   err: CosmosErrors
@@ -217,6 +236,44 @@ export const handleStatusChange = (
             "Cannot create Message View",
             messageStatus.messageId
           )
+        )
+      )
+    ),
+    TE.map(constVoid)
+  );
+
+export const handlePaymentChange = (messageViewModel: MessageViewModel) => (
+  paymentUpdate: PaymentUpdate
+): TE.TaskEither<Failure, void> =>
+  pipe(
+    messageViewModel.find([paymentUpdate.messageId, paymentUpdate.fiscalCode]),
+    TE.mapLeft(() =>
+      wrapErrorToTransientFailure()(Error("Cannot find Message view"))
+    ),
+    TE.chainW(
+      TE.fromOption(() => toPermanentFailure(Error("Message view Not Found"))())
+    ),
+    TE.chainW(existingMessageView =>
+      pipe(
+        messageViewModel.upsert({
+          ...existingMessageView,
+          components: {
+            ...existingMessageView.components,
+            payment: withoutUndefinedValues({
+              due_date:
+                paymentUpdate.dueDate != null
+                  ? paymentUpdate.dueDate
+                  : undefined,
+              has: true,
+              notice_number: paymentUpdate.noticeNumber,
+              payment_status: paymentUpdate.paid
+                ? PaymentStatusEnum.PAID
+                : PaymentStatusEnum.NOT_PAID
+            })
+          }
+        }),
+        TE.mapLeft(() =>
+          wrapErrorToTransientFailure()(Error("Cannot Upsert MessageView"))
         )
       )
     ),
