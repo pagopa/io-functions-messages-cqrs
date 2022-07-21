@@ -910,13 +910,13 @@
     kafkajs "^1.15.0"
     typedoc "^0.20.36"
 
-"@pagopa/io-functions-commons@^25.3.0":
-  version "25.3.0"
-  resolved "https://registry.yarnpkg.com/@pagopa/io-functions-commons/-/io-functions-commons-25.3.0.tgz#bc5600a4bc0b97756579e7966d90c5deb184eebf"
-  integrity sha512-YgMYVNelYFWh4CZ0icUtWKYZ5Jtz68D8X825gaeYAuuiX84+Ast0oTEKnHy/tGWQv/RJchUEmWfzOc1QcQzCXQ==
+"@pagopa/io-functions-commons@^25.5.1":
+  version "25.5.1"
+  resolved "https://registry.yarnpkg.com/@pagopa/io-functions-commons/-/io-functions-commons-25.5.1.tgz#2aab22a6e84aa23c7d03acecaed852130c80afbb"
+  integrity sha512-oNAfnGwCvujf3XbT5usMFjJo9lTAQY86Zt54HW/NK0X67fx/ZPtDRhOGFjhm/qe+eXd/xofJJxeVzvcCo8jwWg==
   dependencies:
     "@azure/cosmos" "^3.15.1"
-    "@pagopa/ts-commons" "^10.3.0"
+    "@pagopa/ts-commons" "^10.5.0"
     applicationinsights "^1.8.10"
     azure-storage "^2.10.5"
     cidr-matcher "^2.1.1"
@@ -953,9 +953,23 @@
     yargs "^15.0.1"
 
 "@pagopa/ts-commons@^10.3.0":
-  version "10.4.0"
-  resolved "https://registry.yarnpkg.com/@pagopa/ts-commons/-/ts-commons-10.4.0.tgz#a422295e24735cfba26b744b055f90f718fd9aef"
-  integrity sha512-4/qbF+WjyjYJqMG8otj3qBwGe4g4DqZ8haou1GkuC4cYog6Yv+BfQT7TbV+dNsTGYbuc6QRw0eHXBPvbjpD7dw==
+  version "10.8.0"
+  resolved "https://registry.yarnpkg.com/@pagopa/ts-commons/-/ts-commons-10.8.0.tgz#2ee54077cf09edf254442e1aad67427078a69edd"
+  integrity sha512-LAdzrwnHeAX5+NuTtd+H9Dwz6Z+MqRVcofKHHlF37O6YoYmNzWmT4+LInjAGIZWnjoEtsBM+8W9PsS6ndX2f6w==
+  dependencies:
+    abort-controller "^3.0.0"
+    agentkeepalive "^4.1.4"
+    applicationinsights "^1.8.10"
+    fp-ts "^2.11.0"
+    io-ts "^2.2.16"
+    json-set-map "^1.1.2"
+    node-fetch "^2.6.0"
+    validator "^13.7.0"
+
+"@pagopa/ts-commons@^10.5.0", "@pagopa/ts-commons@^10.7.1":
+  version "10.7.1"
+  resolved "https://registry.yarnpkg.com/@pagopa/ts-commons/-/ts-commons-10.7.1.tgz#48324b106dc210221d14bc6d537ec64e926fa80f"
+  integrity sha512-obLOYOoOOiI8eFZ2fZOYj0Q/XMjL6muJGHU8GhQymeDw1GRu6aen7eO03W7qLYAXVKZ/pFSRO81AkNPY0ZFcgA==
   dependencies:
     abort-controller "^3.0.0"
     agentkeepalive "^4.1.4"

@@ -9,6 +9,7 @@ import { initTelemetryClient } from "../utils/appinsights";
 import { getConfigOrThrow } from "../utils/config";
 import { cosmosdbInstance } from "../utils/cosmosdb";
 import { Failure } from "../utils/errors";
+import { getThirdPartyDataWithCategoryFetcher } from "../utils/message";
 import { HandleMessageChangeFeedPublishFailureHandler } from "./handler";
 
 const config = getConfigOrThrow();
@@ -35,7 +36,8 @@ export const index: AzureFunction = (
     message,
     telemetryClient,
     messageModel,
-    messageContentBlobService
+    messageContentBlobService,
+    getThirdPartyDataWithCategoryFetcher(config, telemetryClient)
   );
 
 export default index;

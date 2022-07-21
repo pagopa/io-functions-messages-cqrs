@@ -6,12 +6,16 @@ import * as T from "fp-ts/lib/Task";
 import * as TE from "fp-ts/lib/TaskEither";
 import * as RA from "fp-ts/ReadonlyArray";
 
+import { ServiceId } from "@pagopa/io-functions-commons/dist/generated/definitions/ServiceId";
 import {
   MessageModel,
   RetrievedMessage
 } from "@pagopa/io-functions-commons/dist/src/models/message";
-import { toTransientFailure } from "../utils/errors";
+import { MessageContentType } from "../generated/avro/dto/MessageContentTypeEnum";
+import { toPermanentFailure, toTransientFailure } from "../utils/errors";
 import { IStorableError, toStorableError } from "../utils/storable_error";
+import { TelemetryClient } from "./appinsights";
+import { IConfig } from "./config";
 /**
  * Retrieve a message content from blob storage and enrich message
  */
@@ -30,7 +34,7 @@ export const enrichMessageContent = (
     ),
     TE.chain(
       TE.fromOption(() =>
-        toTransientFailure(Error(`Message Content Blob not found`))(message.id)
+        toPermanentFailure(Error(`Message Content Blob not found`))(message.id)
       )
     ),
     TE.mapLeft(toStorableError(message)),
@@ -72,4 +76,35 @@ export const enrichMessagesContent = (
     // call chunk tasks sequentially
     RA.sequence(T.ApplicativeSeq),
     T.map(RA.flatten)
+  );
+
+export interface IThirdPartyDataWithCategory {
+  readonly category: Exclude<MessageContentType, MessageContentType.PAYMENT>;
+}
+
+export type ThirdPartyDataWithCategoryFetcher = (
+  serviceId: ServiceId
+) => IThirdPartyDataWithCategory;
+
+export const getThirdPartyDataWithCategoryFetcher: (
+  config: IConfig,
+  telemetryClient: TelemetryClient
+) => ThirdPartyDataWithCategoryFetcher = (
+  config,
+  telemetryClient
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+) => serviceId =>
+  pipe(
+    serviceId,
+    E.fromPredicate(
+      id => id === config.PN_SERVICE_ID,
+      id => Error(`Missing third-party service configuration for ${id}`)
+    ),
+    E.map(() => MessageContentType.PN as const),
+    E.mapLeft(e => telemetryClient.trackException({ exception: e })),
+    E.mapLeft(() => MessageContentType.GENERIC as const),
+    E.toUnion,
+    category => ({
+      category
+    })
   );

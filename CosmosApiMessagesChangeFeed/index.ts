@@ -18,6 +18,7 @@ import { getConfigOrThrow } from "../utils/config";
 import { cosmosdbInstance } from "../utils/cosmosdb";
 import { Failure } from "../utils/errors";
 import { avroMessageFormatter } from "../utils/formatter/messagesAvroFormatter";
+import { getThirdPartyDataWithCategoryFetcher } from "../utils/message";
 import { IBulkOperationResult } from "../utils/publish";
 import { handleMessageChange } from "./handler";
 
@@ -30,6 +31,9 @@ winston.add(contextTransport);
 
 const config = getConfigOrThrow();
 
+const telemetryClient = initTelemetryClient(
+  config.APPINSIGHTS_INSTRUMENTATIONKEY
+);
 const messagesConfig = {
   ...config.targetKafka,
   sasl: {
@@ -41,7 +45,9 @@ const messagesConfig = {
 
 const messageStatusTopic = {
   ...messagesConfig,
-  messageFormatter: avroMessageFormatter()
+  messageFormatter: avroMessageFormatter(
+    getThirdPartyDataWithCategoryFetcher(config, telemetryClient)
+  )
 };
 
 const kafkaClient = fromConfig(
@@ -52,10 +58,6 @@ const kafkaClient = fromConfig(
 const errorStorage = new QueueClient(
   config.INTERNAL_STORAGE_CONNECTION_STRING,
   config.MESSAGE_PAYMENT_UPDATER_FAILURE_QUEUE_NAME
-);
-
-const telemetryClient = initTelemetryClient(
-  config.APPINSIGHTS_INSTRUMENTATIONKEY
 );
 
 const messageModel = new MessageModel(

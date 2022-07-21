@@ -17,7 +17,10 @@ import {
   TransientFailure
 } from "../utils/errors";
 import { avroMessageFormatter } from "../utils/formatter/messagesAvroFormatter";
-import { enrichMessageContent } from "../utils/message";
+import {
+  enrichMessageContent,
+  ThirdPartyDataWithCategoryFetcher
+} from "../utils/message";
 
 const RetriableMessagePublishFailureInput = t.interface({
   body: RetrievedMessage,
@@ -43,7 +46,9 @@ export const HandleMessageChangeFeedPublishFailureHandler = (
   message: unknown,
   telemetryClient: TelemetryClient,
   messageModel: MessageModel,
-  blobService: BlobService
+  blobService: BlobService,
+  categoryFetcher: ThirdPartyDataWithCategoryFetcher
+  // eslint-disable-next-line max-params
 ): Promise<Failure | void> =>
   pipe(
     message,
@@ -70,11 +75,15 @@ export const HandleMessageChangeFeedPublishFailureHandler = (
       )
     ),
     TE.map(
-      flow(avroMessageFormatter(), JSON.stringify, avroMessage => {
-        // eslint-disable-next-line functional/immutable-data
-        context.bindings.messages = avroMessage;
-        context.done();
-      })
+      flow(
+        avroMessageFormatter(categoryFetcher),
+        JSON.stringify,
+        avroMessage => {
+          // eslint-disable-next-line functional/immutable-data
+          context.bindings.messages = avroMessage;
+          context.done();
+        }
+      )
     ),
     TE.mapLeft(err => {
       const isTransient = TransientFailure.is(err);
@@ -101,6 +110,5 @@ export const HandleMessageChangeFeedPublishFailureHandler = (
       }
       return err;
     }),
-    x => x,
     TE.toUnion
   )();

@@ -2,8 +2,10 @@ import { Context } from "@azure/functions";
 import { MessageModel } from "@pagopa/io-functions-commons/dist/src/models/message";
 import * as O from "fp-ts/lib/Option";
 import * as TE from "fp-ts/lib/TaskEither";
+import { MessageContentType } from "../../generated/avro/dto/MessageContentTypeEnum";
 import { TelemetryClient } from "../../utils/appinsights";
 import { avroMessageFormatter } from "../../utils/formatter/messagesAvroFormatter";
+import { ThirdPartyDataWithCategoryFetcher } from "../../utils/message";
 import {
   aMessageContent,
   aRetrievedMessageWithoutContent
@@ -52,24 +54,29 @@ const aNotRetriableInput: HandleMessagePublishFailureInput = {
 
 const anyParam = {} as any;
 
+const aMessageCategoryFetcher: ThirdPartyDataWithCategoryFetcher = jest.fn(
+  sId => ({ category: MessageContentType.GENERIC })
+);
+
 describe("HandleMessageChangeFeedPublishFailureHandler", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("shoud write an avro message on message bindings", async () => {
+  it("should write an avro message on message bindings", async () => {
     const res = await HandleMessageChangeFeedPublishFailureHandler(
       functionsContextMock,
       aRetriableInput,
       telemetryClientMock,
       mockMessageModel,
-      anyParam
+      anyParam,
+      aMessageCategoryFetcher
     );
     expect(res).toEqual(void 0);
     expect(telemetryClientMock.trackException).not.toHaveBeenCalled();
     expect(functionsContextMock.bindings.messages).toEqual(
       JSON.stringify(
-        avroMessageFormatter()({
+        avroMessageFormatter(aMessageCategoryFetcher)({
           ...inputMessage.body,
           content: aMessageContent,
           kind: "IRetrievedMessageWithContent"
@@ -77,20 +84,8 @@ describe("HandleMessageChangeFeedPublishFailureHandler", () => {
       )
     );
   });
-  it("shoud return void if everything works fine", async () => {
-    await expect(
-      HandleMessageChangeFeedPublishFailureHandler(
-        functionsContextMock,
-        aRetriableInput,
-        telemetryClientMock,
-        mockMessageModel,
-        anyParam
-      )
-    ).resolves.toEqual(void 0);
-    expect(telemetryClientMock.trackException).not.toHaveBeenCalled();
-  });
 
-  it("shoud throw if Transient failure occurs", async () => {
+  it("should throw if Transient failure occurs", async () => {
     getContentFromBlobMock.mockImplementationOnce(() =>
       TE.left("Cannot enrich message content")
     );
@@ -100,7 +95,8 @@ describe("HandleMessageChangeFeedPublishFailureHandler", () => {
         aRetriableInput,
         telemetryClientMock,
         mockMessageModel,
-        anyParam
+        anyParam,
+        aMessageCategoryFetcher
       )
     ).rejects.toBeDefined();
     expect(telemetryClientMock.trackException).toHaveBeenCalledWith(
@@ -110,14 +106,15 @@ describe("HandleMessageChangeFeedPublishFailureHandler", () => {
     );
   });
 
-  it("shoud return a Permanent failure if input decode fails", async () => {
+  it("should return a Permanent failure if input decode fails", async () => {
     await expect(
       HandleMessageChangeFeedPublishFailureHandler(
         functionsContextMock,
         { wrongInput: true },
         telemetryClientMock,
         mockMessageModel,
-        anyParam
+        anyParam,
+        aMessageCategoryFetcher
       )
     ).resolves.toEqual(
       expect.objectContaining({
@@ -127,14 +124,15 @@ describe("HandleMessageChangeFeedPublishFailureHandler", () => {
     expect(telemetryClientMock.trackException).toHaveBeenCalled();
   });
 
-  it("shoud return a Permanent failure if input is not retriable", async () => {
+  it("should return a Permanent failure if input is not retriable", async () => {
     await expect(
       HandleMessageChangeFeedPublishFailureHandler(
         functionsContextMock,
         aNotRetriableInput,
         telemetryClientMock,
         mockMessageModel,
-        anyParam
+        anyParam,
+        aMessageCategoryFetcher
       )
     ).resolves.toEqual(
       expect.objectContaining({

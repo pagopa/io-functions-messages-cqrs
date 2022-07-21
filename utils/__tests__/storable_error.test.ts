@@ -14,7 +14,7 @@ const dummyStorableError = {
 
 const cqrsLogName = "logName";
 
-const mockAppinsights = {
+const mockAppInsights = {
   trackEvent: jest.fn().mockReturnValue(void 0)
 };
 
@@ -26,13 +26,13 @@ describe("storeAndLogError", () => {
     jest.clearAllMocks();
   });
 
-  it("GIVEN a working queue storage client WHEN an error is stored THEN a new entity in the table is created and an event is tracked", async () => {
+  it("GIVEN a working queue storage client WHEN an error is stored THEN a new entity in the queue is created and an event is tracked", async () => {
     mockQueueClient.sendMessage.mockImplementationOnce(() =>
       Promise.resolve(true)
     );
     const result = await storeAndLogError(
       mockQueueClient as any,
-      mockAppinsights as any,
+      mockAppInsights as any,
       cqrsLogName
     )(dummyStorableError)();
 
@@ -45,20 +45,20 @@ describe("storeAndLogError", () => {
         })
       ).toString("base64")
     );
-    expect(mockAppinsights.trackEvent).toBeCalledWith(
+    expect(mockAppInsights.trackEvent).toBeCalledWith(
       expect.objectContaining({
         name: `trigger.messages.cqrs.${cqrsLogName}.failed`
       })
     );
   });
 
-  it("GIVEN a not wroking queue storage client WHEN an error is stored THEN no entities are created and an event is tracked", async () => {
+  it("GIVEN a not working queue storage client WHEN an error is stored THEN no entities are created and an event is tracked", async () => {
     mockQueueClient.sendMessage.mockImplementationOnce(() =>
       Promise.reject(new Error("createEntity failed"))
     );
     const result = await storeAndLogError(
       mockQueueClient as any,
-      mockAppinsights as any,
+      mockAppInsights as any,
       cqrsLogName
     )(dummyStorableError)();
 
@@ -71,7 +71,7 @@ describe("storeAndLogError", () => {
         })
       ).toString("base64")
     );
-    expect(mockAppinsights.trackEvent).toBeCalledWith(
+    expect(mockAppInsights.trackEvent).toBeCalledWith(
       expect.objectContaining({
         name: `trigger.messages.cqrs.${cqrsLogName}.failedwithoutstoringerror`
       })

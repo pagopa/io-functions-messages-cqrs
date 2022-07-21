@@ -71,7 +71,7 @@ describe("CosmosApiMessagesChangeFeed", () => {
       mockKafkaProducerKompact,
       mockQueueClient,
       mockAppinsights,
-      "",
+      "cqrsName",
       aListOfRightMessages
     );
 
@@ -87,14 +87,14 @@ describe("CosmosApiMessagesChangeFeed", () => {
     );
   });
 
-  it("should call sendMessages with empty array of all messages are pending", async () => {
+  it("should call sendMessages on Kafka producer with empty array if all messages are pending", async () => {
     const handler = handleMessageChange(mockMessageModel, {} as any);
 
     const res = await handler(
       mockKafkaProducerKompact,
       mockQueueClient,
       mockAppinsights,
-      "",
+      "cqrsName",
       aListOfRightMessages.map(m => ({
         ...m,
         isPending: true
@@ -118,7 +118,7 @@ describe("CosmosApiMessagesChangeFeed", () => {
       mockKafkaProducerKompact,
       mockQueueClient,
       mockAppinsights,
-      "",
+      "cqrsName",
       [
         ...aListOfRightMessages,
         { ...aRetrievedMessageWithoutContent, isPending: true }
@@ -155,7 +155,7 @@ describe("CosmosApiMessagesChangeFeed - Errors", () => {
         mockKafkaProducerKompact,
         mockQueueClient,
         mockAppinsights,
-        "",
+        "cqrsName",
         aListOfRightMessages
       );
 
@@ -180,7 +180,7 @@ describe("CosmosApiMessagesChangeFeed - Errors", () => {
       mockKafkaProducerKompact,
       mockQueueClient,
       mockAppinsights,
-      "",
+      "cqrsName",
       [...aListOfRightMessages, { error: "error" }]
     );
 
