@@ -1,26 +1,34 @@
+import { MessageContent } from "@pagopa/io-functions-commons/dist/generated/definitions/MessageContent";
+import { PaymentAmount } from "@pagopa/io-functions-commons/dist/generated/definitions/PaymentAmount";
+import { PaymentNoticeNumber } from "@pagopa/io-functions-commons/dist/generated/definitions/PaymentNoticeNumber";
+import { PaymentStatusEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/PaymentStatus";
+import { MessageView } from "@pagopa/io-functions-commons/dist/src/models/message_view";
 import { CosmosErrorResponse } from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model";
+import { NonEmptyString } from "@pagopa/ts-commons/lib/strings";
+import * as E from "fp-ts/Either";
+import { pipe } from "fp-ts/lib/function";
+import * as O from "fp-ts/lib/Option";
+import * as TE from "fp-ts/TaskEither";
 import {
-  aMessageId,
   aFiscalCode,
   aMessageContent,
-  aRetrievedMessageWithoutContent,
+  aMessageContentWithDueDate,
+  aMessageId,
   aMessageStatus,
   aMessageView,
-  aMessageContentWithDueDate
+  aRetrievedMessageWithoutContent
 } from "../../__mocks__/message";
-import { handleStatusChange } from "../message_view";
-import * as E from "fp-ts/Either";
-import * as TE from "fp-ts/TaskEither";
-import * as O from "fp-ts/lib/Option";
-import { MessageContent } from "@pagopa/io-functions-commons/dist/generated/definitions/MessageContent";
-import { PaymentNoticeNumber } from "@pagopa/io-functions-commons/dist/generated/definitions/PaymentNoticeNumber";
-import { PaymentAmount } from "@pagopa/io-functions-commons/dist/generated/definitions/PaymentAmount";
-import { NonEmptyString } from "@pagopa/ts-commons/lib/strings";
-import { PaymentStatusEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/PaymentStatus";
+import {
+  handlePaymentChange,
+  handleStatusChange,
+  PaymentUpdate
+} from "../message_view";
 
 const mockMessageViewModel = {
+  find: jest.fn(),
   patch: jest.fn(),
-  create: jest.fn()
+  create: jest.fn(),
+  upsert: jest.fn()
 };
 
 const mockMessageModel = {
@@ -486,5 +494,130 @@ describe("handleStatusChange", () => {
     expect(mockMessageViewModel.patch).toBeCalledTimes(1);
     expect(mockMessageModel.find).toBeCalledWith([aMessageId, aFiscalCode]);
     expect(mockMessageViewModel.create).not.toHaveBeenCalled();
+  });
+});
+
+const aMessageViewWithPaymentComponent = pipe(
+  MessageView.decode({
+    ...aMessageView,
+    components: {
+      ...aMessageView.components,
+      payment: {
+        has: true,
+        notice_number: "177777777777777777" as PaymentNoticeNumber,
+        payment_status: PaymentStatusEnum.NOT_PAID
+      }
+    }
+  }),
+  E.getOrElseW(() => {
+    throw new Error("Cannot decode MessageView with Payment Component");
+  })
+);
+
+const aPaymentUpdate: PaymentUpdate = {
+  fiscalCode: aMessageView.fiscalCode,
+  messageId: aMessageView.id,
+  paid: true,
+  noticeNumber: "011111111111111111" as PaymentNoticeNumber
+};
+
+describe("handlePaymentChange", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("GIVEN a valid payment update WHEN the message_view already contains the message THEN the message_view is updated with payment data from payment update", async () => {
+    mockMessageViewModel.find.mockImplementationOnce(() =>
+      TE.right(O.some(aMessageViewWithPaymentComponent))
+    );
+
+    mockMessageViewModel.upsert.mockImplementationOnce(() => TE.right(void 0));
+
+    const result = await handlePaymentChange(mockMessageViewModel as any)(
+      aPaymentUpdate
+    )();
+
+    expect(E.isRight(result)).toBeTruthy();
+    expect(mockMessageViewModel.upsert).toBeCalledWith({
+      ...aMessageViewWithPaymentComponent,
+      components: {
+        ...aMessageViewWithPaymentComponent.components,
+        payment: {
+          ...aMessageViewWithPaymentComponent.components.payment,
+          notice_number: aPaymentUpdate.noticeNumber,
+          payment_status: PaymentStatusEnum.PAID
+        }
+      }
+    });
+  });
+
+  it("GIVEN a valid payment update WHEN the message_view does not exists THEN a permanent failure is returned", async () => {
+    mockMessageViewModel.find.mockImplementationOnce(() => TE.right(O.none));
+
+    const result = await handlePaymentChange(mockMessageViewModel as any)(
+      aPaymentUpdate
+    )();
+
+    expect(mockMessageViewModel.upsert).not.toHaveBeenCalled();
+    expect(E.isLeft(result)).toBeTruthy();
+    if (E.isLeft(result)) {
+      expect(result.left).toEqual({
+        kind: "PERMANENT",
+        reason: expect.stringContaining("Message view Not Found")
+      });
+    }
+  });
+
+  it("GIVEN a valid payment update WHEN the message_view cannot be read from cosmos THEN a transient failure is returned", async () => {
+    mockMessageViewModel.find.mockImplementationOnce(() =>
+      TE.left(Error("Cannot read form collection"))
+    );
+
+    const result = await handlePaymentChange(mockMessageViewModel as any)(
+      aPaymentUpdate
+    )();
+
+    expect(mockMessageViewModel.upsert).not.toHaveBeenCalled();
+    expect(E.isLeft(result)).toBeTruthy();
+    if (E.isLeft(result)) {
+      expect(result.left).toEqual({
+        kind: "TRANSIENT",
+        reason: expect.stringContaining("Cannot find Message view")
+      });
+    }
+  });
+
+  it("GIVEN a valid payment update WHEN the message_view cannot be upserted THEN a transient failure is returned", async () => {
+    mockMessageViewModel.find.mockImplementationOnce(() =>
+      TE.right(O.some(aMessageViewWithPaymentComponent))
+    );
+
+    mockMessageViewModel.upsert.mockImplementationOnce(() =>
+      TE.left(Error("Cannot upsert model"))
+    );
+
+    const result = await handlePaymentChange(mockMessageViewModel as any)(
+      aPaymentUpdate
+    )();
+
+    expect(mockMessageViewModel.upsert).toHaveBeenCalled();
+    expect(mockMessageViewModel.upsert).toHaveBeenCalledWith({
+      ...aMessageViewWithPaymentComponent,
+      components: {
+        ...aMessageViewWithPaymentComponent.components,
+        payment: {
+          ...aMessageViewWithPaymentComponent.components.payment,
+          notice_number: aPaymentUpdate.noticeNumber,
+          payment_status: PaymentStatusEnum.PAID
+        }
+      }
+    });
+    expect(E.isLeft(result)).toBeTruthy();
+    if (E.isLeft(result)) {
+      expect(result.left).toEqual({
+        kind: "TRANSIENT",
+        reason: expect.stringContaining("Cannot Upsert MessageView")
+      });
+    }
   });
 });

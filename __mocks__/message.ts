@@ -1,11 +1,12 @@
+import { FeatureLevelTypeEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/FeatureLevelType";
 import { MessageContent } from "@pagopa/io-functions-commons/dist/generated/definitions/MessageContent";
 import { MessageStatusValueEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/MessageStatusValue";
 import { ServiceId } from "@pagopa/io-functions-commons/dist/generated/definitions/ServiceId";
 import { TimeToLiveSeconds } from "@pagopa/io-functions-commons/dist/generated/definitions/TimeToLiveSeconds";
 import {
   Components,
-  Status,
-  MessageView
+  MessageView,
+  Status
 } from "@pagopa/io-functions-commons/dist/src/models/message_view";
 import { NonNegativeInteger } from "@pagopa/ts-commons/lib/numbers";
 import { FiscalCode, NonEmptyString } from "@pagopa/ts-commons/lib/strings";
@@ -26,6 +27,8 @@ export const cosmosMetadata = {
 
 export const aRetrievedMessageWithoutContent = {
   ...cosmosMetadata,
+  featureLevelType: FeatureLevelTypeEnum.STANDARD,
+  isPending: false,
   fiscalCode: aFiscalCode,
   id: aMessageId,
   indexedId: "A_MESSAGE_ID" as NonEmptyString,

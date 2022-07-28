@@ -1,21 +1,9 @@
-import { handle, storeAndLogError } from "../handler";
-import * as E from "fp-ts/Either";
+import { MessageStatusValueEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/MessageStatusValue";
 import * as TE from "fp-ts/TaskEither";
+import { toPermanentFailure, TransientFailure } from "../../utils/errors";
 import * as mw from "../../utils/message_view";
 import { aMessageStatus } from "../../__mocks__/message";
-import { toPermanentFailure, TransientFailure } from "../../utils/errors";
-import { MessageStatusValueEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/MessageStatusValue";
-
-const dummyDocument = {
-  test: "test value"
-};
-
-const dummyStorableError = {
-  name: "Storable Error",
-  body: dummyDocument,
-  message: "error message",
-  retriable: true
-};
+import { handle } from "../handler";
 
 const mockAppinsights = {
   trackEvent: jest.fn().mockReturnValue(void 0)
@@ -38,63 +26,6 @@ const aTransientFailure: TransientFailure = {
   kind: "TRANSIENT",
   reason: "aReason"
 };
-
-describe("storeAndLogError", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it("GIVEN a working table storage client WHEN an error is stored THEN a new entity in the table is created and an event is tracked", async () => {
-    mockQueueClient.sendMessage.mockImplementationOnce(() =>
-      Promise.resolve(true)
-    );
-    const result = await storeAndLogError(
-      mockQueueClient as any,
-      mockAppinsights as any
-    )(dummyStorableError)();
-
-    expect(E.isRight(result)).toBeTruthy();
-    expect(mockQueueClient.sendMessage).toBeCalledWith(
-      Buffer.from(
-        JSON.stringify({
-          ...dummyStorableError,
-          body: dummyStorableError.body
-        })
-      ).toString("base64")
-    );
-    expect(mockAppinsights.trackEvent).toBeCalledWith(
-      expect.objectContaining({
-        name: "trigger.messages.cqrs.updatemessageview.failed"
-      })
-    );
-  });
-
-  it("GIVEN a not wroking table storage client WHEN an error is stored THEN no entities are created and an event is tracked", async () => {
-    mockQueueClient.sendMessage.mockImplementationOnce(() =>
-      Promise.reject(new Error("createEntity failed"))
-    );
-    const result = await storeAndLogError(
-      mockQueueClient as any,
-      mockAppinsights as any
-    )(dummyStorableError)();
-
-    expect(E.isLeft(result)).toBeTruthy();
-    expect(mockQueueClient.sendMessage).toBeCalledWith(
-      Buffer.from(
-        JSON.stringify({
-          ...dummyStorableError,
-          body: dummyStorableError.body
-        })
-      ).toString("base64")
-    );
-    expect(mockAppinsights.trackEvent).toBeCalledWith(
-      expect.objectContaining({
-        name:
-          "trigger.messages.cqrs.updatemessageview.failedwithoutstoringerror"
-      })
-    );
-  });
-});
 
 describe("handle", () => {
   beforeEach(() => {

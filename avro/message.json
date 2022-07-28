@@ -1,0 +1,102 @@
+{
+  "name": "message",
+  "type": "record",
+  "namespace": "dto",
+  "doc": "Kafka JS schema for cosmos api container 'messages'",
+  "fields": [
+    {
+      "name": "dueDate",
+      "type": ["null","int"],
+      "logicalType": "date",
+      "default": null
+    },
+    {
+      "name": "fiscalCode",
+      "type": "string",
+      "default": "undefined"
+    },
+    {
+      "name": "id",
+      "type": "string",
+      "default": "undefined"
+    },
+    {
+      "name": "senderServiceId",
+      "type": "string",
+      "default": "undefined"
+    },
+    {
+      "name": "senderUserId",
+      "type": "string",
+      "default": "undefined"
+    },
+    {
+      "name": "timeToLiveSeconds",
+      "type": "int",
+      "default": 3600
+    },
+    {
+      "name": "createdAt",
+      "type": "int",
+      "logicalType": "time-millis",
+      "default": 0
+    },
+    {
+      "name": "isPending",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "name": "content_subject",
+      "type": "string",
+      "default": "undefined"
+    },
+    {
+      "name": "feature_level_type",
+      "type": ["null", {
+        "type": "enum",
+        "name": "FeatureLevelType",
+        "symbols": [
+          "STANDARD",
+          "ADVANCED"
+        ]
+      }],
+      "default": null
+    },
+    {
+      "name": "content_type",
+      "type": ["null", {
+        "type": "enum",
+        "name": "MessageContentType",
+        "symbols": [
+          "GENERIC",
+          "PAYMENT",
+          "EU_COVID_CERT",
+          "LEGAL",
+          "PN"
+        ]
+      }],
+      "default": null
+    },
+    {
+      "name": "content_paymentData_amount",
+      "type": "int",
+      "default": 0
+    },
+    {
+      "name": "content_paymentData_noticeNumber",
+      "type": "string",
+      "default": "undefined"
+    },
+    {
+      "name": "content_paymentData_invalidAfterDueDate",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "name": "content_paymentData_payeeFiscalCode",
+      "type": "string",
+      "default": "undefined"
+    }
+  ]
+}
