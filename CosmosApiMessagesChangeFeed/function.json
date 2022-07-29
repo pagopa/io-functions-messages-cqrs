@@ -5,14 +5,13 @@
       "type": "cosmosDBTrigger",
       "name": "cosmosApiMessagesTrigger",
       "direction": "in",
-      "connectionStringSetting": "COSMOS_API_CONNECTION_STRING",
+      "connectionStringSetting": "COSMOSDB_CONNECTION_STRING",
       "databaseName": "%COSMOSDB_NAME%",
       "collectionName": "messages",
       "leaseCollectionName": "cqrs-leases",
       "leaseCollectionPrefix": "CosmosApiMessageChangeFeedForPaymentUpdater",
       "createLeaseCollectionIfNotExists": true,
       "startFromBeginning": false
-
     }
   ],
   "scriptFile": "../dist/CosmosApiMessagesChangeFeed/index.js"
