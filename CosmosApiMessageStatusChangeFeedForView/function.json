@@ -11,7 +11,7 @@
       "leaseCollectionName": "cqrs-leases",
       "leaseCollectionPrefix": "CosmosApiMessageStatusChangeFeedForView",
       "createLeaseCollectionIfNotExists": true,
-      "startFromBeginning": false
+      "startFromBeginning": true
     },
     {
       "type": "eventHub",
