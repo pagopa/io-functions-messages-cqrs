@@ -6,8 +6,8 @@
   "fields": [
     {
       "name": "dueDate",
-      "type": ["null","int"],
-      "logicalType": "date",
+      "type": ["null","long"],
+      "logicalType": "time-millis",
       "default": null
     },
     {
@@ -37,7 +37,7 @@
     },
     {
       "name": "createdAt",
-      "type": "int",
+      "type": "long",
       "logicalType": "time-millis",
       "default": 0
     },
