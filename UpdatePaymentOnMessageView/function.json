@@ -2,7 +2,7 @@
   "bindings": [
     {
       "type": "eventHubTrigger",
-      "name": "paymentUpdate",
+      "name": "rawPaymentUpdate",
       "direction": "in",
       "eventHubName": "%PAYMENT_FOR_VIEW_TOPIC_NAME%",
       "consumerGroup": "%PAYMENT_FOR_VIEW_TOPIC_CONSUMER_GROUP%",
