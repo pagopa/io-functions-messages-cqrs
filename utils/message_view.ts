@@ -65,7 +65,7 @@ export const PaymentUpdate = t.intersection([
   }),
   t.partial({
     amount: NonNegativeInteger,
-    dueDate: DateFromString
+    dueDate: t.union([t.null, DateFromString])
   })
 ]);
 
