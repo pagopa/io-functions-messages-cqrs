@@ -110,7 +110,7 @@ export const buildAvroMessagesObject = (
     content_type: RetrievedMessageWithContent.is(retrievedMessage)
       ? getCategory(retrievedMessage, retrievedMessage.content, categoryFetcher)
       : null,
-    createdAt: retrievedMessage.createdAt.getMilliseconds(),
+    createdAt: retrievedMessage.createdAt.getTime(),
     dueDate: messageContent?.due_date?.getTime() ?? 0,
     feature_level_type: mapFeatureLevelType(retrievedMessage.featureLevelType),
     fiscalCode: retrievedMessage.fiscalCode,
