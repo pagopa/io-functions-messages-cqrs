@@ -22,7 +22,9 @@
     }
   ],
   "retry": {
-    "maxRetryCount": -1
+    "strategy": "fixedDelay",
+    "maxRetryCount": -1,
+    "delayInterval": "00:00:10"
   },
   "scriptFile": "../dist/CosmosApiMessageStatusChangeFeedForView/index.js"
 }
