@@ -75,13 +75,11 @@ describe("HandleMessageChangeFeedPublishFailureHandler", () => {
     expect(res).toEqual(void 0);
     expect(telemetryClientMock.trackException).not.toHaveBeenCalled();
     expect(functionsContextMock.bindings.messages).toEqual(
-      JSON.stringify(
-        avroMessageFormatter(aMessageCategoryFetcher)({
-          ...inputMessage.body,
-          content: aMessageContent,
-          kind: "IRetrievedMessageWithContent"
-        })
-      )
+      avroMessageFormatter(aMessageCategoryFetcher)({
+        ...inputMessage.body,
+        content: aMessageContent,
+        kind: "IRetrievedMessageWithContent"
+      }).value
     );
   });
 
