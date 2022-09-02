@@ -67,4 +67,13 @@ describe("CosmosApiMessageStatusChangeFeedForReminder", () => {
     );
     expect(mockContext.done).toHaveBeenCalled();
   });
+
+  it("should populate output bindings only if PROCESSED retrieved message status array is not empty", async () => {
+    await handler(mockContext, [
+      { ...aMessageStatus, status: MessageStatusValueEnum.REJECTED }
+    ]);
+
+    expect(mockContext.bindings["outputMessageStatus"]).toBeUndefined();
+    expect(mockContext.done).toHaveBeenCalled();
+  });
 });
