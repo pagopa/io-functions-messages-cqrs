@@ -75,15 +75,11 @@ export const HandleMessageChangeFeedPublishFailureHandler = (
       )
     ),
     TE.map(
-      flow(
-        avroMessageFormatter(categoryFetcher),
-        JSON.stringify,
-        avroMessage => {
-          // eslint-disable-next-line functional/immutable-data
-          context.bindings.messages = avroMessage;
-          context.done();
-        }
-      )
+      flow(avroMessageFormatter(categoryFetcher), avroMessage => {
+        // eslint-disable-next-line functional/immutable-data
+        context.bindings.messages = avroMessage.value;
+        context.done();
+      })
     ),
     TE.mapLeft(err => {
       const isTransient = TransientFailure.is(err);
