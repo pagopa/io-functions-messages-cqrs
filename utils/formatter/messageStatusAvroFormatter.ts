@@ -32,6 +32,6 @@ export const toAvroMessageStatus = (messageStatus: RetrievedMessageStatus) =>
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const avroMessageStatusFormatter = (): MessageFormatter<RetrievedMessageStatus> => messageStatus => ({
-  key: messageStatus.id,
+  key: messageStatus.messageId,
   value: toAvroMessageStatus(messageStatus)
 });
