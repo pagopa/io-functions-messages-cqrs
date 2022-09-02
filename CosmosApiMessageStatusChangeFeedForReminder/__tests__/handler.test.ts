@@ -24,17 +24,21 @@ const getExpectedMessageStatusBuffer = (
 // Mocks
 // ----------------------
 
-const mockContext = {
-  bindings: {},
-  done: jest.fn()
-} as any;
+const mockContext = { bindings: {}, done: jest.fn() } as any;
+
+const resetBindings = () => {
+  mockContext.bindings = {};
+};
 
 // ----------------------
 // Tests
 // ----------------------
 
 describe("CosmosApiMessageStatusChangeFeedForReminder", () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    resetBindings();
+  });
   it("should send all retrieved message status", async () => {
     await handler(mockContext, aListOfMessageStatus);
 
