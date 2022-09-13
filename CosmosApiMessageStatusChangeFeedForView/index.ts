@@ -17,7 +17,6 @@ winston.add(contextTransport);
 const config = getConfigOrThrow();
 
 const messageStatusConfig = {
-  // TODO override conf
   ...config.targetKafka,
   brokers: [config.MESSAGE_STATUS_FOR_VIEW_BROKERS],
   sasl: {
