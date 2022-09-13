@@ -5,7 +5,7 @@ import * as KP from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaProducerCompact";
 import * as RA from "fp-ts/ReadonlyArray";
 import * as TE from "fp-ts/TaskEither";
 
-export const handleMessageStatusChangeFeed = async (
+export const handleMessageStatusChangeFeedForView = async (
   _: Context,
   rawMessageStatus: ReadonlyArray<unknown>,
   client: KP.KafkaProducerCompact<RetrievedMessageStatus>

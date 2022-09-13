@@ -5,7 +5,7 @@ import { fromConfig } from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaProducerCompact"
 import { ValidableKafkaProducerConfig } from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaTypes";
 import { getConfigOrThrow } from "../utils/config";
 import { jsonMessageStatusFormatter } from "../utils/formatter/messageStatusJsonFormatter";
-import { handleMessageStatusChangeFeed } from "./handler";
+import { handleMessageStatusChangeFeedForView } from "./handler";
 
 // eslint-disable-next-line functional/no-let
 let logger: Context["log"] | undefined;
@@ -19,6 +19,7 @@ const config = getConfigOrThrow();
 const messageStatusConfig = {
   // TODO override conf
   ...config.targetKafka,
+  brokers: [config.MESSAGE_STATUS_FOR_VIEW_BROKERS],
   sasl: {
     ...config.targetKafka.sasl,
     password: config.MESSAGE_STATUS_FOR_VIEW_TOPIC_PRODUCER_CONNECTION_STRING
@@ -41,7 +42,11 @@ const run = async (
   rawMessageStatus: ReadonlyArray<unknown>
 ): Promise<void> => {
   logger = context.log;
-  return handleMessageStatusChangeFeed(context, rawMessageStatus, kafkaClient);
+  return handleMessageStatusChangeFeedForView(
+    context,
+    rawMessageStatus,
+    kafkaClient
+  );
 };
 
 export default run;
