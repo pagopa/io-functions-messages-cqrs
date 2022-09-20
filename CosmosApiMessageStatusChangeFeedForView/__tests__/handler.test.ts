@@ -43,6 +43,7 @@ describe("CosmosApiMessageStatusChangeFeedForView", () => {
       [{ ...aMessageStatus, status: "WRONG_STATUS" }, ...aListOfMessageStatus],
       kafkaClient
     );
+    expect(sendMessagesMock).toBeCalledTimes(1);
     expect(res).toBe(void 0);
   });
 
