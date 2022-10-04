@@ -7,5 +7,6 @@ export const toJsonMessageStatus = (
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const jsonMessageStatusFormatter = (): MessageFormatter<RetrievedMessageStatus> => messageStatus => ({
+  key: messageStatus.messageId,
   value: toJsonMessageStatus(messageStatus)
 });
