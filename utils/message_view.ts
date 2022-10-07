@@ -251,7 +251,7 @@ export const handlePaymentChange = (messageViewModel: MessageViewModel) => (
       wrapErrorToTransientFailure()(Error("Cannot find Message view"))
     ),
     TE.chainW(
-      TE.fromOption(() => toPermanentFailure(Error("Message view Not Found"))())
+      TE.fromOption(() => toTransientFailure(Error("Message view Not Found"))())
     ),
     TE.chainW(existingMessageView =>
       pipe(

@@ -562,7 +562,7 @@ describe("handlePaymentChange", () => {
     expect(E.isLeft(result)).toBeTruthy();
     if (E.isLeft(result)) {
       expect(result.left).toEqual({
-        kind: "PERMANENT",
+        kind: "TRANSIENT",
         reason: expect.stringContaining("Message view Not Found")
       });
     }
