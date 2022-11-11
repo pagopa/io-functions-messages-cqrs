@@ -17,6 +17,7 @@ import { readableReport } from "@pagopa/ts-commons/lib/reporters";
 import { NonEmptyString } from "@pagopa/ts-commons/lib/strings";
 
 import { KafkaProducerCompactConfig } from "@pagopa/fp-ts-kafkajs/dist/lib/IoKafkaTypes";
+import { AzureEventhubSasFromString } from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaProducerCompact";
 
 const isStringKeysRecord = (i: unknown): i is Record<string, unknown> =>
   typeof i === "object" &&
@@ -109,6 +110,7 @@ export const IDecodableConfig = t.interface({
   MESSAGE_CONTENT_STORAGE_CONNECTION: NonEmptyString,
   MESSAGE_PAYMENT_UPDATER_FAILURE_QUEUE_NAME: NonEmptyString,
 
+  MESSAGE_STATUS_FOR_REMINDER_TOPIC_PRODUCER_CONNECTION_STRING: AzureEventhubSasFromString,
   MESSAGE_STATUS_FOR_VIEW_BROKERS: NonEmptyString,
   MESSAGE_STATUS_FOR_VIEW_TOPIC_CONSUMER_CONNECTION_STRING: NonEmptyString,
   MESSAGE_STATUS_FOR_VIEW_TOPIC_CONSUMER_GROUP: NonEmptyString,

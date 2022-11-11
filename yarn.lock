@@ -899,10 +899,10 @@
   resolved "https://registry.yarnpkg.com/@pagopa/express-azure-functions/-/express-azure-functions-2.1.1.tgz#ac6aa6d8c8d82b64e0db19ccadd2e89cc35ea725"
   integrity sha512-x2kBGS6JKYqVp7PS9QiBc2AWIOPBObHwlaheJmxZJacnxmLdXHobomTzN2UJMxu55fxMd7xIxqM8VGMQxSzqiw==
 
-"@pagopa/fp-ts-kafkajs@^0.2.0":
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/@pagopa/fp-ts-kafkajs/-/fp-ts-kafkajs-0.2.0.tgz#da43118ebda18a8bb0e460b655f3585ddee4da92"
-  integrity sha512-SStVd/XFpQ5AnpxEBvze9qEEJ+o4xgesAGOFkAupZqZ45ohhyIspDK/cUnSVYNFn6rEA8DMTe84W8Xxp8zZ11g==
+"@pagopa/fp-ts-kafkajs@^0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@pagopa/fp-ts-kafkajs/-/fp-ts-kafkajs-0.3.0.tgz#bb00931bb1ed4d16f763657f19046d838d9049e9"
+  integrity sha512-16/71Bvn8oa6KAAqFuWRd4aAZbILHPu0B5NLrU67l0as/YiunWzTz5yKep5MOiHw+SvgBOWLmsJCQh9Wpyg+jw==
   dependencies:
     "@pagopa/ts-commons" "^10.5.1"
     fp-ts "^2.10.5"
