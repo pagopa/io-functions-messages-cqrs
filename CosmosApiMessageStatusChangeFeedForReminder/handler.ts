@@ -2,14 +2,16 @@ import { Context } from "@azure/functions";
 import { RetrievedMessageStatus } from "@pagopa/io-functions-commons/dist/src/models/message_status";
 import { constVoid, pipe } from "fp-ts/lib/function";
 import * as RA from "fp-ts/ReadonlyArray";
-import * as B from "fp-ts/boolean";
 import { MessageStatusValueEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/MessageStatusValue";
-import { toAvroMessageStatus } from "../utils/formatter/messageStatusAvroFormatter";
+import * as KP from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaProducerCompact";
+import * as TE from "fp-ts/TaskEither";
+import * as T from "fp-ts/Task";
 
 export const handleAvroMessageStatusPublishChange = async (
-  context: Context,
+  _: Context,
+  client: KP.KafkaProducerCompact<RetrievedMessageStatus>,
   rawMessageStatus: ReadonlyArray<unknown>
-): Promise<void> => {
+): Promise<void> =>
   pipe(
     rawMessageStatus,
     RA.map(RetrievedMessageStatus.decode),
@@ -17,16 +19,12 @@ export const handleAvroMessageStatusPublishChange = async (
     RA.filter(
       messageStatus => messageStatus.status === MessageStatusValueEnum.PROCESSED
     ),
-    RA.map(toAvroMessageStatus),
-    avros =>
-      pipe(
-        avros,
-        RA.isEmpty,
-        B.fold(() => {
-          // eslint-disable-next-line functional/immutable-data
-          context.bindings.outputMessageStatus = avros;
-        }, constVoid)
-      )
-  );
-  context.done();
-};
+    KP.sendMessages(client),
+    TE.mapLeft(RA.reduce("", (acc, err) => `${acc}|${err.message}`)),
+    TE.getOrElseW(errMessage => {
+      throw new Error(
+        `Error publishing message statuses to Reminder|${errMessage}`
+      );
+    }),
+    T.map(constVoid)
+  )();

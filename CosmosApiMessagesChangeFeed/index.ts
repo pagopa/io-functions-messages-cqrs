@@ -43,7 +43,7 @@ const messagesConfig = {
   topic: config.MessagesKafkaTopicConfig.MESSAGES_TOPIC_NAME
 };
 
-const messageStatusTopic = {
+const messageTopic = {
   ...messagesConfig,
   messageFormatter: avroMessageFormatter(
     getThirdPartyDataWithCategoryFetcher(config, telemetryClient)
@@ -52,7 +52,7 @@ const messageStatusTopic = {
 
 const kafkaClient = fromConfig(
   messagesConfig as ValidableKafkaProducerConfig, // cast due to wrong association between Promise<void> and t.Function ('brokers' field)
-  messageStatusTopic
+  messageTopic
 );
 
 const errorStorage = new QueueClient(
