@@ -1,3 +1,5 @@
+import * as TE from "fp-ts/lib/TaskEither";
+
 import { FeatureLevelTypeEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/FeatureLevelType";
 import { MessageContent } from "@pagopa/io-functions-commons/dist/generated/definitions/MessageContent";
 import { NotRejectedMessageStatusValueEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/NotRejectedMessageStatusValue";
@@ -12,6 +14,8 @@ import { NonNegativeInteger } from "@pagopa/ts-commons/lib/numbers";
 import { FiscalCode, NonEmptyString } from "@pagopa/ts-commons/lib/strings";
 import * as E from "fp-ts/lib/Either";
 import { RetrievedMessageStatusWithFiscalCode } from "../utils/message_view";
+import { MessageModel } from "@pagopa/io-functions-commons/dist/src/models/message";
+import { MessageStatusModel } from "@pagopa/io-functions-commons/dist/src/models/message_status";
 
 export const now = new Date();
 
@@ -95,3 +99,15 @@ export const aMessageView: MessageView = {
   status: aStatus,
   version: 0 as NonNegativeInteger
 };
+
+export const mockPatch = jest.fn(() => TE.of(aRetrievedMessageWithoutContent));
+
+export const mockMessageModel: MessageModel = ({
+  patch: mockPatch
+} as any) as MessageModel;
+
+export const mockUpdateTTLForAllVersions = jest.fn(() => TE.of(1));
+
+export const mockMessageStatusModel: MessageStatusModel = ({
+  updateTTLForAllVersions: mockUpdateTTLForAllVersions
+} as unknown) as MessageStatusModel;
