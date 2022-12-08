@@ -14,19 +14,23 @@ import {
   ProfileModel
 } from "@pagopa/io-functions-commons/dist/src/models/profile";
 import { RejectedMessageStatusValueEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/RejectedMessageStatusValue";
-import { NonNegativeInteger } from "@pagopa/ts-commons/lib/numbers";
 import { MessageModel } from "@pagopa/io-functions-commons/dist/src/models/message";
 import { FiscalCode } from "@pagopa/io-functions-commons/dist/generated/definitions/FiscalCode";
 import { CosmosErrors } from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model";
+import { Ttl } from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model_ttl";
 
 /**
   the timestamp related to 2022-11-23   20:00:00
   we have released the version of fn-service that adds the TTL to message and message-status,
   so we do no longer want to clean up after this ts
  */
-// export const RELEASE_TIMESTAMP = 1669233600;
+export const RELEASE_TIMESTAMP = 1669233600;
 
-export const RELEASE_TIMESTAMP = 1670534079;
+/**
+  3 years in seconds
+*/
+
+export const TTL_VALUE = 94670856 as Ttl;
 
 export const isStatusRejected = (document: RetrievedMessageStatus): boolean =>
   document.status === RejectedMessageStatusValueEnum.REJECTED;
@@ -81,13 +85,13 @@ export const setTTLForMessageAndStatus = (
     messageModel.patch(
       [document.messageId, document.fiscalCode as FiscalCode],
       {
-        ttl: 500
+        ttl: TTL_VALUE
       } as Partial<MessageStatus>
     ),
     TE.chain(() =>
       messageStatusModel.updateTTLForAllVersions(
         [document.messageId],
-        500 as NonNegativeInteger
+        TTL_VALUE
       )
     ),
     TE.map(() => document)
