@@ -1,6 +1,6 @@
 /* eslint-disable max-params */
 import { QueueClient } from "@azure/storage-queue";
-import { MessageStatusValueEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/MessageStatusValue";
+import { NotRejectedMessageStatusValueEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/NotRejectedMessageStatusValue";
 import { MessageModel } from "@pagopa/io-functions-commons/dist/src/models/message";
 import { MessageViewModel } from "@pagopa/io-functions-commons/dist/src/models/message_view";
 import { BlobService } from "azure-storage";
@@ -38,7 +38,7 @@ export const handle = (
         TE.fromPredicate(
           messageStatusWithFiscalCode =>
             messageStatusWithFiscalCode.status !==
-            MessageStatusValueEnum.PROCESSED,
+            NotRejectedMessageStatusValueEnum.PROCESSED,
           identity
         ),
         TE.orElseW(

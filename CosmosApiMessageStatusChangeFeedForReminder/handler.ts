@@ -2,10 +2,10 @@ import { Context } from "@azure/functions";
 import { RetrievedMessageStatus } from "@pagopa/io-functions-commons/dist/src/models/message_status";
 import { constVoid, pipe } from "fp-ts/lib/function";
 import * as RA from "fp-ts/ReadonlyArray";
-import { MessageStatusValueEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/MessageStatusValue";
 import * as KP from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaProducerCompact";
 import * as TE from "fp-ts/TaskEither";
 import * as T from "fp-ts/Task";
+import { NotRejectedMessageStatusValueEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/NotRejectedMessageStatusValue";
 
 export const handleAvroMessageStatusPublishChange = async (
   _: Context,
@@ -17,7 +17,8 @@ export const handleAvroMessageStatusPublishChange = async (
     RA.map(RetrievedMessageStatus.decode),
     RA.rights,
     RA.filter(
-      messageStatus => messageStatus.status === MessageStatusValueEnum.PROCESSED
+      messageStatus =>
+        messageStatus.status === NotRejectedMessageStatusValueEnum.PROCESSED
     ),
     KP.sendMessages(client),
     TE.mapLeft(RA.reduce("", (acc, err) => `${acc}|${err.message}`)),

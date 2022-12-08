@@ -7,9 +7,9 @@ import {
   avroMessageStatusFormatter,
   toAvroMessageStatus
 } from "../../utils/formatter/messageStatusAvroFormatter";
-import { MessageStatusValueEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/MessageStatusValue";
 import { Producer, ProducerRecord } from "kafkajs";
 import { KafkaProducerCompact } from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaProducerCompact";
+import { RejectedMessageStatusValueEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/RejectedMessageStatusValue";
 
 // ----------------------
 // Variables
@@ -93,7 +93,7 @@ describe("CosmosApiMessageStatusChangeFeedForReminder", () => {
 
   it("should send only PROCESSED retrieved message status", async () => {
     await handler(mockContext, producerMock, [
-      { ...aMessageStatus, status: MessageStatusValueEnum.REJECTED },
+      { ...aMessageStatus, status: RejectedMessageStatusValueEnum.REJECTED },
       ...aListOfMessageStatus
     ]);
 
@@ -106,7 +106,7 @@ describe("CosmosApiMessageStatusChangeFeedForReminder", () => {
 
   it("should call sendMessage only if PROCESSED retrieved message status array is not empty", async () => {
     await handler(mockContext, producerMock, [
-      { ...aMessageStatus, status: MessageStatusValueEnum.REJECTED }
+      { ...aMessageStatus, status: RejectedMessageStatusValueEnum.REJECTED }
     ]);
 
     expect(mockSendMessage).not.toHaveBeenCalled();
