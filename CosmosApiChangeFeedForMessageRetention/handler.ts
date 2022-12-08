@@ -28,7 +28,7 @@ export const RELEASE_TIMESTAMP = 1669233600;
 
 /**
   3 years in seconds
-*/
+ */
 
 export const TTL_VALUE = 94670856 as Ttl;
 
