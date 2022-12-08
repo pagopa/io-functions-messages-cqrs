@@ -3,6 +3,18 @@
   "Values": {
     "FUNCTIONS_WORKER_RUNTIME": "node",
     "AzureWebJobsStorage": "{AzureWebJobsStorage}",
-    "FUNCTIONS_V2_COMPATIBILITY_MODE": false
+    "FUNCTIONS_V2_COMPATIBILITY_MODE": false,
+    "TARGETKAFKA_clientId": "",
+    "TARGETKAFKA_brokers": "",
+    "TARGETKAFKA_ssl": "",
+    "TARGETKAFKA_sasl_mechanism": "",
+    "TARGETKAFKA_sasl_username": "",
+    "TARGETKAFKA_maxInFlightRequests": "",
+    "TARGETKAFKA_idempotent": "",
+    "TARGETKAFKA_transactionalId": "",
+    "TARGETKAFKA_sasl_password": "",
+    "TARGETKAFKA_topic": "",
+    "MESSAGES_TOPIC_NAME": "",
+    "MESSAGES_TOPIC_CONNECTION_STRING": ""
   }
 }
