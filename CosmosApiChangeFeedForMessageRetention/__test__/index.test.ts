@@ -16,6 +16,7 @@ import {
 } from "../../__mocks__/message";
 
 import { mockProfileFindLast, mockProfileModel } from "../../__mocks__/profile";
+import { TelemetryClient } from "../../utils/appinsights";
 
 const ttl = 500 as Ttl;
 
@@ -39,22 +40,28 @@ const mockDocuments = [
   aMessageStatus
 ];
 
+const mockTelemetryClient = ({
+  trackEvent: jest.fn(_ => void 0)
+} as unknown) as TelemetryClient;
+
 describe("isEligibleForTTL", () => {
   it("should return a string if the status is not REJECTED", async () => {
-    const r = await isEligibleForTTL(aMessageStatus)();
+    const r = await isEligibleForTTL(mockTelemetryClient)(aMessageStatus)();
     expect(E.isLeft(r)).toBeTruthy();
     if (E.isLeft(r)) {
       expect(r.left).toBe("This message status is not rejected");
     }
+    expect(mockTelemetryClient.trackEvent).not.toHaveBeenCalled();
   });
 
   it("should return a string if the _ts is after the RELEASE_TIMESTAMP", async () => {
-    const r = await isEligibleForTTL({
+    const r = await isEligibleForTTL(mockTelemetryClient)({
       ...aMessageStatus,
       _ts: 2670524345,
       status: RejectedMessageStatusValueEnum.REJECTED
     })();
     expect(E.isLeft(r)).toBeTruthy();
+    expect(mockTelemetryClient.trackEvent).toHaveBeenCalledTimes(1);
     if (E.isLeft(r)) {
       expect(r.left).toBe(
         `the timestamp of the document ${
@@ -65,12 +72,13 @@ describe("isEligibleForTTL", () => {
   });
 
   it("should return a string if the document already has a ttl", async () => {
-    const r = await isEligibleForTTL({
+    const r = await isEligibleForTTL(mockTelemetryClient)({
       ...aMessageStatus,
       status: RejectedMessageStatusValueEnum.REJECTED,
       ttl
     })();
     expect(E.isLeft(r)).toBeTruthy();
+    expect(mockTelemetryClient.trackEvent).not.toHaveBeenCalled();
     if (E.isLeft(r)) {
       expect(r.left).toBe(
         `the document ${aMessageStatus.id} has a ttl already`
@@ -79,8 +87,9 @@ describe("isEligibleForTTL", () => {
   });
 
   it("should return the retrieved document if it is eligible", async () => {
-    const r = await isEligibleForTTL(anEligibleDocument)();
+    const r = await isEligibleForTTL(mockTelemetryClient)(anEligibleDocument)();
     expect(E.isRight(r)).toBeTruthy();
+    expect(mockTelemetryClient.trackEvent).not.toHaveBeenCalled();
     if (E.isRight(r)) {
       expect(r.right).toBe(anEligibleDocument);
     }
@@ -104,12 +113,14 @@ describe("handleSetTTL", () => {
       mockMessageModel,
       mockProfileModel,
       mockContext,
+      mockTelemetryClient,
       mockDocuments
     )();
     expect(E.isLeft(r)).toBeTruthy();
     expect(mockProfileFindLast).toHaveBeenCalledTimes(4);
     expect(mockUpdateTTLForAllVersions).not.toHaveBeenCalled();
     expect(mockPatch).not.toHaveBeenCalled();
+    expect(mockTelemetryClient.trackEvent).not.toHaveBeenCalled();
   });
 
   it("should set the ttl for 4 documents for not registered users", async () => {
@@ -125,12 +136,14 @@ describe("handleSetTTL", () => {
       mockMessageModel,
       mockProfileModel,
       mockContext,
+      mockTelemetryClient,
       mockDocuments
     )();
     expect(E.isLeft(r)).toBeTruthy();
     expect(mockProfileFindLast).toHaveBeenCalledTimes(4);
     expect(mockUpdateTTLForAllVersions).toHaveBeenCalledTimes(4);
     expect(mockPatch).toHaveBeenCalledTimes(4);
+    expect(mockTelemetryClient.trackEvent).not.toHaveBeenCalled();
   });
 
   it("Should return a cosmos error in case of patch fails", async () => {
@@ -141,12 +154,14 @@ describe("handleSetTTL", () => {
       mockMessageModel,
       mockProfileModel,
       mockContext,
+      mockTelemetryClient,
       mockDocuments
     )();
     expect(E.isLeft(r)).toBeTruthy();
     expect(mockProfileFindLast).toHaveBeenCalledTimes(4);
     expect(mockPatch).toHaveBeenCalledTimes(4);
     expect(mockUpdateTTLForAllVersions).not.toHaveBeenCalled();
+    expect(mockTelemetryClient.trackEvent).not.toHaveBeenCalled();
   });
 
   it("Should return a cosmos error in case of mockUpdateTTLForAllVersions fails", async () => {
@@ -160,11 +175,13 @@ describe("handleSetTTL", () => {
       mockMessageModel,
       mockProfileModel,
       mockContext,
+      mockTelemetryClient,
       mockDocuments
     )();
     expect(E.isLeft(r)).toBeTruthy();
     expect(mockProfileFindLast).toHaveBeenCalledTimes(4);
     expect(mockPatch).toHaveBeenCalledTimes(4);
     expect(mockUpdateTTLForAllVersions).toHaveBeenCalledTimes(4);
+    expect(mockTelemetryClient.trackEvent).not.toHaveBeenCalled();
   });
 });

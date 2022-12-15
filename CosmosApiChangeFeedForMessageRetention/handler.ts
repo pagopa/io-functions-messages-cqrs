@@ -18,6 +18,7 @@ import { MessageModel } from "@pagopa/io-functions-commons/dist/src/models/messa
 import { FiscalCode } from "@pagopa/io-functions-commons/dist/generated/definitions/FiscalCode";
 import { CosmosErrors } from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model";
 import { Ttl } from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model_ttl";
+import { TelemetryClient } from "../utils/appinsights";
 
 /**
   the timestamp related to 2022-11-23   20:00:00
@@ -47,6 +48,10 @@ export const isBeforeDate = (firstTs: number, secondTs: number): boolean =>
   firstTs < secondTs;
 
 export const isEligibleForTTL = (
+  telemetryClient: TelemetryClient
+): ((
+  document: RetrievedMessageStatus
+) => TE.TaskEither<string, RetrievedMessageStatus>) => (
   document: RetrievedMessageStatus
 ): TE.TaskEither<string, RetrievedMessageStatus> =>
   pipe(
@@ -59,9 +64,13 @@ export const isEligibleForTTL = (
       TE.fromPredicate(
         // eslint-disable-next-line no-underscore-dangle
         () => isBeforeDate(document._ts, RELEASE_TIMESTAMP),
-        () =>
+        () => {
+          telemetryClient.trackEvent({
+            name: `trigger.messages.cqrs.release-timestamp-reached`
+          });
           // eslint-disable-next-line no-underscore-dangle
-          `the timestamp of the document ${document.id} (${document._ts}) is after the RELEASE_TIMESTAMP ${RELEASE_TIMESTAMP}`
+          return `the timestamp of the document ${document.id} (${document._ts}) is after the RELEASE_TIMESTAMP ${RELEASE_TIMESTAMP}`;
+        }
       )
     ),
     TE.chain(
@@ -107,17 +116,19 @@ export const handleSetTTL = (
   messageModel: MessageModel,
   profileModel: ProfileModel,
   context: Context,
+  telemetryClient: TelemetryClient,
   documents: ReadonlyArray<RetrievedMessageStatus>
 ): TE.TaskEither<
   string | CosmosErrors,
   ReadonlyArray<RetrievedMessageStatus>
+  // eslint-disable-next-line max-params
 > =>
   pipe(
     documents,
     RA.map((d: RetrievedMessageStatus) =>
       pipe(
         d,
-        isEligibleForTTL,
+        isEligibleForTTL(telemetryClient),
         TE.mapLeft((e: string) => {
           context.log(e);
           return e;

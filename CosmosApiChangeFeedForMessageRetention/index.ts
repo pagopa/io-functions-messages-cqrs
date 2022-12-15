@@ -14,6 +14,8 @@ import {
 } from "@pagopa/io-functions-commons/dist/src/models/message";
 import { cosmosdbInstance } from "../utils/cosmosdb";
 import { getConfigOrThrow } from "../utils/config";
+import { initTelemetryClient } from "../utils/appinsights";
+import { TelemetryClient } from "../utils/appinsights";
 import { handleSetTTL } from "./handler";
 
 const config = getConfigOrThrow();
@@ -31,6 +33,10 @@ const profileModel = new ProfileModel(
   cosmosdbInstance.container(PROFILE_COLLECTION_NAME)
 );
 
+const telemetryClient: TelemetryClient = initTelemetryClient(
+  config.APPINSIGHTS_INSTRUMENTATIONKEY
+);
+
 const run: AzureFunction = async (
   context: Context,
   documents: ReadonlyArray<RetrievedMessageStatus>
@@ -40,6 +46,7 @@ const run: AzureFunction = async (
     messageModel,
     profileModel,
     context,
+    telemetryClient,
     documents
   )();
 
