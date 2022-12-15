@@ -92,7 +92,12 @@ describe("handleSetTTL", () => {
     jest.restoreAllMocks();
   });
 
-  it("should call the findLastVersionByModelId 3 times but never set the ttl", async () => {
+  it("should call the findLastVersionByModelId 4 times but never set the ttl", async () => {
+    /*
+     * In this scenario we are passing 4 eligible documents so we expect the mockProfileFindLast to have been called 4 times
+     * but the ttl should never be setted cause by default mockProfileFindLast return a Some meaning that the user exist.
+     * */
+
     const r = await handleSetTTL(
       mockMessageStatusModel,
       mockMessageModel,
@@ -106,7 +111,13 @@ describe("handleSetTTL", () => {
     expect(mockPatch).not.toHaveBeenCalled();
   });
 
-  it("should set the ttl for 3 documents for not registered users", async () => {
+  it("should set the ttl for 4 documents for not registered users", async () => {
+    /*
+     * In this scenario we are passing 4 eligible documents so we expect the mockProfileFindLast to have been called 4 times,
+     * also the mockProfileFindLast return a None meaning the user does not exists, we expect mockUpdateTTLForAllVersions and mockPatch
+     * to have been called 4 times then
+     * */
+
     mockProfileFindLast.mockReturnValue(TE.of(O.none));
     const r = await handleSetTTL(
       mockMessageStatusModel,
