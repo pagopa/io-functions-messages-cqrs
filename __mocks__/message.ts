@@ -1,6 +1,6 @@
 import { FeatureLevelTypeEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/FeatureLevelType";
 import { MessageContent } from "@pagopa/io-functions-commons/dist/generated/definitions/MessageContent";
-import { MessageStatusValueEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/MessageStatusValue";
+import { NotRejectedMessageStatusValueEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/NotRejectedMessageStatusValue";
 import { ServiceId } from "@pagopa/io-functions-commons/dist/generated/definitions/ServiceId";
 import { TimeToLiveSeconds } from "@pagopa/io-functions-commons/dist/generated/definitions/TimeToLiveSeconds";
 import {
@@ -62,7 +62,7 @@ export const aMessageStatus: RetrievedMessageStatusWithFiscalCode = {
   ...cosmosMetadata,
   messageId: aMessageId,
   id: `${aMessageId}-0` as NonEmptyString,
-  status: MessageStatusValueEnum.PROCESSED,
+  status: NotRejectedMessageStatusValueEnum.PROCESSED,
   version: 0 as NonNegativeInteger,
   updatedAt: new Date(),
   fiscalCode: aFiscalCode,
@@ -81,7 +81,7 @@ export const aComponents: Components = {
 
 export const aStatus: Status = {
   archived: false,
-  processing: MessageStatusValueEnum.PROCESSED,
+  processing: NotRejectedMessageStatusValueEnum.PROCESSED,
   read: false
 };
 

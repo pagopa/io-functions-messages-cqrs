@@ -1,4 +1,4 @@
-import { MessageStatusValueEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/MessageStatusValue";
+import { NotRejectedMessageStatusValueEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/NotRejectedMessageStatusValue";
 import * as TE from "fp-ts/TaskEither";
 import { toPermanentFailure, TransientFailure } from "../../utils/errors";
 import * as mw from "../../utils/message_view";
@@ -135,7 +135,7 @@ describe("handle", () => {
       anyParam,
       anyParam,
       anyParam,
-      { ...aMessageStatus, status: MessageStatusValueEnum.FAILED }
+      { ...aMessageStatus, status: NotRejectedMessageStatusValueEnum.FAILED }
     );
 
     expect(mockQueueClient.sendMessage).not.toHaveBeenCalled();
