@@ -1,8 +1,5 @@
 {  
   "version": "2.0",
-  "functions": [
-    "CosmosApiChangeFeedForMessageRetention"
-  ],
   "functionTimeout": "02:30:00",
   "logging": {
     "logLevel": {

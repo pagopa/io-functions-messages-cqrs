@@ -8,7 +8,7 @@
       "leaseCollectionPrefix": "%LEASE_COLLECTION_PREFIX%-",
       "connectionStringSetting": "COSMOSDB_CONNECTION_STRING",
       "databaseName": "%COSMOSDB_NAME%",
-      "collectionName": "%COSMOSDB_MESSAGE_STATUS_CONTAINER_NAME%",
+      "collectionName": "message-status",
       "createLeaseCollectionIfNotExists": true,
       "startFromBeginning": true
     }
