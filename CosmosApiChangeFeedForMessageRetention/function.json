@@ -13,5 +13,11 @@
       "startFromBeginning": true
     }
   ],
+  "retry": {
+    "strategy": "exponentialBackoff",
+    "maxRetryCount": -1,
+    "minimumInterval": "00:00:05",
+    "maximumInterval": "00:01:00"
+  },
   "scriptFile": "../dist/CosmosApiChangeFeedForMessageRetention/index.js"
 }
