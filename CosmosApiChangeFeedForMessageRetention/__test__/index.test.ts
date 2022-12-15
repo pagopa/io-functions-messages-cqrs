@@ -8,6 +8,7 @@ import { Context } from "@azure/functions";
 import { handleSetTTL, isEligibleForTTL, RELEASE_TIMESTAMP } from "../handler";
 import {
   aMessageStatus,
+  aRetrievedMessageWithoutContent,
   mockMessageModel,
   mockMessageStatusModel,
   mockPatch,
@@ -86,12 +87,12 @@ describe("isEligibleForTTL", () => {
   });
 });
 
-describe("handleSetTTL", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    jest.restoreAllMocks();
-  });
+beforeEach(() => {
+  jest.clearAllMocks();
+  jest.restoreAllMocks();
+});
 
+describe("handleSetTTL", () => {
   it("should call the findLastVersionByModelId 4 times but never set the ttl", async () => {
     /*
      * In this scenario we are passing 4 eligible documents so we expect the mockProfileFindLast to have been called 4 times
@@ -130,5 +131,40 @@ describe("handleSetTTL", () => {
     expect(mockProfileFindLast).toHaveBeenCalledTimes(4);
     expect(mockUpdateTTLForAllVersions).toHaveBeenCalledTimes(4);
     expect(mockPatch).toHaveBeenCalledTimes(4);
+  });
+
+  it("Should return a cosmos error in case of patch fails", async () => {
+    mockProfileFindLast.mockReturnValue(TE.of(O.none));
+    mockPatch.mockReturnValue(TE.left({ kind: "COSMOS_EMPTY_RESPONSE" }));
+    const r = await handleSetTTL(
+      mockMessageStatusModel,
+      mockMessageModel,
+      mockProfileModel,
+      mockContext,
+      mockDocuments
+    )();
+    expect(E.isLeft(r)).toBeTruthy();
+    expect(mockProfileFindLast).toHaveBeenCalledTimes(4);
+    expect(mockPatch).toHaveBeenCalledTimes(4);
+    expect(mockUpdateTTLForAllVersions).not.toHaveBeenCalled();
+  });
+
+  it("Should return a cosmos error in case of mockUpdateTTLForAllVersions fails", async () => {
+    mockProfileFindLast.mockReturnValue(TE.of(O.none));
+    mockPatch.mockReturnValue(TE.of(aRetrievedMessageWithoutContent));
+    mockUpdateTTLForAllVersions.mockReturnValue(
+      TE.left({ kind: "COSMOS_EMPTY_RESPONSE" })
+    );
+    const r = await handleSetTTL(
+      mockMessageStatusModel,
+      mockMessageModel,
+      mockProfileModel,
+      mockContext,
+      mockDocuments
+    )();
+    expect(E.isLeft(r)).toBeTruthy();
+    expect(mockProfileFindLast).toHaveBeenCalledTimes(4);
+    expect(mockPatch).toHaveBeenCalledTimes(4);
+    expect(mockUpdateTTLForAllVersions).toHaveBeenCalledTimes(4);
   });
 });

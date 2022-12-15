@@ -14,8 +14,12 @@ import { NonNegativeInteger } from "@pagopa/ts-commons/lib/numbers";
 import { FiscalCode, NonEmptyString } from "@pagopa/ts-commons/lib/strings";
 import * as E from "fp-ts/lib/Either";
 import { RetrievedMessageStatusWithFiscalCode } from "../utils/message_view";
-import { MessageModel } from "@pagopa/io-functions-commons/dist/src/models/message";
+import {
+  MessageModel,
+  RetrievedMessageWithoutContent
+} from "@pagopa/io-functions-commons/dist/src/models/message";
 import { MessageStatusModel } from "@pagopa/io-functions-commons/dist/src/models/message_status";
+import { CosmosErrors } from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model";
 
 export const now = new Date();
 
@@ -29,7 +33,7 @@ export const cosmosMetadata = {
   _ts: 1
 };
 
-export const aRetrievedMessageWithoutContent = {
+export const aRetrievedMessageWithoutContent: RetrievedMessageWithoutContent = {
   ...cosmosMetadata,
   featureLevelType: FeatureLevelTypeEnum.STANDARD,
   isPending: false,
@@ -40,7 +44,7 @@ export const aRetrievedMessageWithoutContent = {
   senderUserId: "u123" as NonEmptyString,
   timeToLiveSeconds: 3600 as TimeToLiveSeconds,
   createdAt: new Date(),
-  kind: "INewMessageWithoutContent"
+  kind: "IRetrievedMessageWithoutContent"
 };
 
 export const aMessageBodyMarkdown = "test".repeat(80);
@@ -100,13 +104,18 @@ export const aMessageView: MessageView = {
   version: 0 as NonNegativeInteger
 };
 
-export const mockPatch = jest.fn(() => TE.of(aRetrievedMessageWithoutContent));
+export const mockPatch = jest.fn(
+  (): TE.TaskEither<CosmosErrors, RetrievedMessageWithoutContent> =>
+    TE.of(aRetrievedMessageWithoutContent)
+);
 
 export const mockMessageModel: MessageModel = ({
   patch: mockPatch
 } as any) as MessageModel;
 
-export const mockUpdateTTLForAllVersions = jest.fn(() => TE.of(1));
+export const mockUpdateTTLForAllVersions = jest.fn(
+  (): TE.TaskEither<CosmosErrors, number> => TE.of(1)
+);
 
 export const mockMessageStatusModel: MessageStatusModel = ({
   updateTTLForAllVersions: mockUpdateTTLForAllVersions
