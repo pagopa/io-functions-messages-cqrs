@@ -2,7 +2,7 @@
   "bindings": [
     {
       "type": "cosmosDBTrigger",
-      "name": "documents",
+      "name": "messageStatusDocuments",
       "direction": "in",
       "leaseCollectionName": "%LEASE_MESSAGE_STATUS%",
       "leaseCollectionPrefix": "%LEASE_COLLECTION_PREFIX%",
