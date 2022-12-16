@@ -12,6 +12,7 @@ import {
   MessageModel,
   MESSAGE_COLLECTION_NAME
 } from "@pagopa/io-functions-commons/dist/src/models/message";
+import { NonEmptyString } from "@pagopa/ts-commons/lib/strings";
 import { cosmosdbInstance } from "../utils/cosmosdb";
 import { getConfigOrThrow } from "../utils/config";
 import { initTelemetryClient } from "../utils/appinsights";
@@ -26,7 +27,7 @@ const messageStatusModel = new MessageStatusModel(
 
 const messageModel = new MessageModel(
   cosmosdbInstance.container(MESSAGE_COLLECTION_NAME),
-  config.COSMOSDB_MESSAGES_CONTAINER
+  "message-content" as NonEmptyString
 );
 
 const profileModel = new ProfileModel(

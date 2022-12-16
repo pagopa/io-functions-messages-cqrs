@@ -102,7 +102,6 @@ export const IDecodableConfig = t.interface({
 
   COSMOSDB_CONNECTION_STRING: NonEmptyString,
   COSMOSDB_KEY: NonEmptyString,
-  COSMOSDB_MESSAGES_CONTAINER: NonEmptyString,
   COSMOSDB_NAME: NonEmptyString,
   COSMOSDB_URI: NonEmptyString,
 
