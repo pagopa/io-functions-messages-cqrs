@@ -149,7 +149,8 @@ describe("handleSetTTL", () => {
   it("Should return a cosmos error in case of patch fails", async () => {
     mockProfileFindLast.mockReturnValue(TE.of(O.none));
     mockPatch.mockReturnValue(TE.left({ kind: "COSMOS_EMPTY_RESPONSE" }));
-    const r = await handleSetTTL(
+
+    const r = handleSetTTL(
       mockMessageStatusModel,
       mockMessageModel,
       mockProfileModel,
@@ -157,11 +158,10 @@ describe("handleSetTTL", () => {
       mockTelemetryClient,
       mockDocuments
     )();
-    expect(E.isLeft(r)).toBeTruthy();
-    expect(mockProfileFindLast).toHaveBeenCalledTimes(4);
-    expect(mockPatch).toHaveBeenCalledTimes(4);
-    expect(mockUpdateTTLForAllVersions).not.toHaveBeenCalled();
-    expect(mockTelemetryClient.trackEvent).not.toHaveBeenCalled();
+
+    await expect(r).rejects.toThrowError(
+      'Something went wrong trying to update the message ttl | {"kind":"COSMOS_EMPTY_RESPONSE"}'
+    );
   });
 
   it("Should return a cosmos error in case of mockUpdateTTLForAllVersions fails", async () => {
@@ -170,7 +170,7 @@ describe("handleSetTTL", () => {
     mockUpdateTTLForAllVersions.mockReturnValue(
       TE.left({ kind: "COSMOS_EMPTY_RESPONSE" })
     );
-    const r = await handleSetTTL(
+    const r = handleSetTTL(
       mockMessageStatusModel,
       mockMessageModel,
       mockProfileModel,
@@ -178,10 +178,9 @@ describe("handleSetTTL", () => {
       mockTelemetryClient,
       mockDocuments
     )();
-    expect(E.isLeft(r)).toBeTruthy();
-    expect(mockProfileFindLast).toHaveBeenCalledTimes(4);
-    expect(mockPatch).toHaveBeenCalledTimes(4);
-    expect(mockUpdateTTLForAllVersions).toHaveBeenCalledTimes(4);
-    expect(mockTelemetryClient.trackEvent).not.toHaveBeenCalled();
+
+    await expect(r).rejects.toThrowError(
+      `Something went wrong trying to update the message-status ttl | {"kind":"COSMOS_EMPTY_RESPONSE"}`
+    );
   });
 });

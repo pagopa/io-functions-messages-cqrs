@@ -97,12 +97,26 @@ export const setTTLForMessageAndStatus = (
         ttl: TTL_VALUE
       } as Partial<MessageStatus>
     ),
+    TE.mapLeft((err: CosmosErrors) => {
+      throw new Error(
+        `Something went wrong trying to update the message ttl | ${JSON.stringify(
+          err
+        )}`
+      );
+    }),
     TE.chain(() =>
       messageStatusModel.updateTTLForAllVersions(
         [document.messageId],
         TTL_VALUE
       )
     ),
+    TE.mapLeft((err: CosmosErrors) => {
+      throw new Error(
+        `Something went wrong trying to update the message-status ttl | ${JSON.stringify(
+          err
+        )}`
+      );
+    }),
     TE.map(() => document)
   );
 
