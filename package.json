@@ -3,7 +3,7 @@
   "description": "",
   "author": "IO team",
   "repository": "https://github.com/pagopa/<YOUR PROJECT NAME>",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "license": "MIT",
   "scripts": {
     "prebuild": "shx rm -rf dist && yarn generate",
@@ -58,7 +58,7 @@
     "@chasdevs/avro-to-typescript": "^1.4.0",
     "@pagopa/express-azure-functions": "^2.1.1",
     "@pagopa/fp-ts-kafkajs": "^0.3.0",
-    "@pagopa/io-functions-commons": "^26.2.1",
+    "@pagopa/io-functions-commons": "^26.3.0",
     "@pagopa/ts-commons": "^10.7.1",
     "applicationinsights": "^1.7.4",
     "avsc": "^5.7.3",
