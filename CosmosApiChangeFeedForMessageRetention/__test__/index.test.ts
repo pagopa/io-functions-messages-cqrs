@@ -4,6 +4,7 @@ import * as E from "fp-ts/lib/Either";
 
 import { Ttl } from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model_ttl";
 import { RejectedMessageStatusValueEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/RejectedMessageStatusValue";
+import { RejectionReasonEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/RejectionReason";
 import { handleSetTTL, isEligibleForTTL, RELEASE_TIMESTAMP } from "../handler";
 import {
   aMessageStatus,
@@ -135,6 +136,53 @@ describe("handleSetTTL", () => {
     expect(mockUpdateTTLForAllVersions).toHaveBeenCalledTimes(4);
     expect(mockPatch).toHaveBeenCalledTimes(4);
     expect(mockTelemetryClient.trackEvent).not.toHaveBeenCalled();
+  });
+
+  it("Should call the setTTLForMessageAndStatus without calling the profileModel.findLastVersionByModelId", async () => {
+    /*
+     * we are passing a document with rejection_reason setted to USER_NOT_FOUND, the mockProfileFindLast should never be called then
+     * */
+    const r = await handleSetTTL(
+      mockMessageStatusModel,
+      mockMessageModel,
+      mockProfileModel,
+      mockTelemetryClient,
+      [
+        {
+          ...anEligibleDocument,
+          rejection_reason: RejectionReasonEnum.USER_NOT_FOUND
+        }
+      ]
+    )();
+    expect(E.isRight(r)).toBeTruthy();
+    expect(mockProfileFindLast).not.toHaveBeenCalled();
+    expect(mockPatch).toHaveBeenCalledTimes(1);
+    expect(mockUpdateTTLForAllVersions).toHaveBeenCalledTimes(1);
+  });
+
+  it("Should call the setTTLForMessageAndStatus without calling the profileModel.findLastVersionByModelId", async () => {
+    /*
+     * we are passing a document with rejection_reason setted to SERVICE_NOT_ALLOWED,
+     * mockProfileFindLast, mockPatch and mockUpdateTTLForAllVersions should never be called then cause we don't want to set the ttl
+     * */
+    const r = await handleSetTTL(
+      mockMessageStatusModel,
+      mockMessageModel,
+      mockProfileModel,
+      mockTelemetryClient,
+      [
+        {
+          ...anEligibleDocument,
+          rejection_reason: RejectionReasonEnum.SERVICE_NOT_ALLOWED
+        },
+        aMessageStatus,
+        aMessageStatus
+      ]
+    )();
+    expect(E.isLeft(r)).toBeTruthy();
+    expect(mockProfileFindLast).not.toHaveBeenCalled();
+    expect(mockPatch).not.toHaveBeenCalled();
+    expect(mockUpdateTTLForAllVersions).not.toHaveBeenCalled();
   });
 
   it("Should return a cosmos error in case of patch fails", async () => {

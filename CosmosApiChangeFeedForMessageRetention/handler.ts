@@ -17,6 +17,7 @@ import { MessageModel } from "@pagopa/io-functions-commons/dist/src/models/messa
 import { FiscalCode } from "@pagopa/io-functions-commons/dist/generated/definitions/FiscalCode";
 import { CosmosErrors } from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model";
 import { Ttl } from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model_ttl";
+import { RejectionReasonEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/RejectionReason";
 import { TelemetryClient } from "../utils/appinsights";
 
 /**
@@ -119,6 +120,12 @@ export const setTTLForMessageAndStatus = (
     TE.map(() => document)
   );
 
+export const isRejectionReasonDefined = (
+  retrievedMessageStatus: RetrievedMessageStatus
+): boolean =>
+  retrievedMessageStatus.status === RejectedMessageStatusValueEnum.REJECTED &&
+  retrievedMessageStatus.rejection_reason !== undefined;
+
 /**
   Handle the logic of setting ttl for those message-status entries related to 
   non existing users for IO.
@@ -141,25 +148,56 @@ export const handleSetTTL = (
       pipe(
         retrievedDocument,
         isEligibleForTTL(telemetryClient),
-        TE.chainW(() =>
-          pipe(
-            profileModel.findLastVersionByModelId([
-              // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
-              retrievedDocument.fiscalCode!
-            ]),
-            TE.mapLeft((err: CosmosErrors) => {
-              throw new Error(
-                `Something went wrong trying to find the profile | ${JSON.stringify(
-                  err
-                )}`
-              );
-            }),
-            TE.chainW(
-              flow(
-                TE.fromPredicate(
-                  (maybeProfile: O.Option<Profile>) => O.isNone(maybeProfile),
-                  () => "This profile exist"
+        TE.chainW(
+          flow(
+            // before all we check if the rejectionReason is defined
+            TE.fromPredicate(
+              isRejectionReasonDefined,
+              () => "rejectionReason not defined"
+            ),
+            TE.fold(
+              () =>
+                // the rejection reason is not defined so we need to call the profileModel in order to verify if the user exists
+                pipe(
+                  profileModel.findLastVersionByModelId([
+                    // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
+                    retrievedDocument.fiscalCode!
+                  ]),
+                  TE.mapLeft((err: CosmosErrors) => {
+                    throw new Error(
+                      `Something went wrong trying to find the profile | ${JSON.stringify(
+                        err
+                      )}`
+                    );
+                  }),
+                  TE.chainW(
+                    flow(
+                      TE.fromPredicate(
+                        (maybeProfile: O.Option<Profile>) =>
+                          O.isNone(maybeProfile),
+                        () => "This profile exist"
+                      ),
+                      TE.chainW(() =>
+                        setTTLForMessageAndStatus(
+                          retrievedDocument,
+                          messageStatusModel,
+                          messageModel
+                        )
+                      )
+                    )
+                  )
                 ),
+              flow(
+                // the rejection reason is defined, we need to check if it is USER_NOT_FOUND, otherwise we do not set the ttl
+                TE.fromPredicate(
+                  () =>
+                    RejectedMessageStatusValueEnum.REJECTED ===
+                      retrievedDocument.status &&
+                    RejectionReasonEnum.USER_NOT_FOUND ===
+                      retrievedDocument.rejection_reason,
+                  () => "The reason of the rejection is not USER_NOT_FOUND"
+                ),
+                // eslint-disable-next-line
                 TE.chainW(() =>
                   setTTLForMessageAndStatus(
                     retrievedDocument,
