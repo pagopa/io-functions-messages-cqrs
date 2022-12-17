@@ -4,7 +4,6 @@ import * as E from "fp-ts/lib/Either";
 
 import { Ttl } from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model_ttl";
 import { RejectedMessageStatusValueEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/RejectedMessageStatusValue";
-import { Context } from "@azure/functions";
 import { handleSetTTL, isEligibleForTTL, RELEASE_TIMESTAMP } from "../handler";
 import {
   aMessageStatus,
@@ -24,12 +23,6 @@ const anEligibleDocument = {
   ...aMessageStatus,
   status: RejectedMessageStatusValueEnum.REJECTED
 };
-
-const mockContext = ({
-  bindings: {},
-  done: jest.fn(),
-  log: jest.fn()
-} as unknown) as Context;
 
 const mockDocuments = [
   anEligibleDocument,
@@ -112,7 +105,6 @@ describe("handleSetTTL", () => {
       mockMessageStatusModel,
       mockMessageModel,
       mockProfileModel,
-      mockContext,
       mockTelemetryClient,
       mockDocuments
     )();
@@ -135,7 +127,6 @@ describe("handleSetTTL", () => {
       mockMessageStatusModel,
       mockMessageModel,
       mockProfileModel,
-      mockContext,
       mockTelemetryClient,
       mockDocuments
     )();
@@ -154,7 +145,6 @@ describe("handleSetTTL", () => {
       mockMessageStatusModel,
       mockMessageModel,
       mockProfileModel,
-      mockContext,
       mockTelemetryClient,
       mockDocuments
     )();
@@ -174,7 +164,6 @@ describe("handleSetTTL", () => {
       mockMessageStatusModel,
       mockMessageModel,
       mockProfileModel,
-      mockContext,
       mockTelemetryClient,
       mockDocuments
     )();

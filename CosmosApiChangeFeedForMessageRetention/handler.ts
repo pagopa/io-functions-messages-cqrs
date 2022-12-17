@@ -8,7 +8,6 @@ import {
   MessageStatusModel,
   RetrievedMessageStatus
 } from "@pagopa/io-functions-commons/dist/src/models/message_status";
-import { Context } from "@azure/functions";
 import {
   Profile,
   ProfileModel
@@ -129,7 +128,6 @@ export const handleSetTTL = (
   messageStatusModel: MessageStatusModel,
   messageModel: MessageModel,
   profileModel: ProfileModel,
-  context: Context,
   telemetryClient: TelemetryClient,
   documents: ReadonlyArray<RetrievedMessageStatus>
 ): TE.TaskEither<
@@ -143,10 +141,6 @@ export const handleSetTTL = (
       pipe(
         d,
         isEligibleForTTL(telemetryClient),
-        TE.mapLeft((e: string) => {
-          context.log(e);
-          return e;
-        }),
         TE.chainW(() =>
           pipe(
             // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion

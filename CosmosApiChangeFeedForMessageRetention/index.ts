@@ -39,14 +39,13 @@ const telemetryClient: TelemetryClient = initTelemetryClient(
 );
 
 const run: AzureFunction = async (
-  context: Context,
+  _: Context,
   documents: ReadonlyArray<RetrievedMessageStatus>
 ) =>
   await handleSetTTL(
     messageStatusModel,
     messageModel,
     profileModel,
-    context,
     telemetryClient,
     documents
   )();
