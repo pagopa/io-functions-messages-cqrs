@@ -88,7 +88,7 @@ export const setTTLForMessageAndStatus = (
   document: RetrievedMessageStatus,
   messageStatusModel: MessageStatusModel,
   messageModel: MessageModel
-): TE.TaskEither<CosmosErrors, RetrievedMessageStatus> =>
+): TE.TaskEither<never, RetrievedMessageStatus> =>
   pipe(
     messageModel.patch(
       [document.messageId, document.fiscalCode as FiscalCode],
@@ -131,20 +131,29 @@ export const handleSetTTL = (
   telemetryClient: TelemetryClient,
   documents: ReadonlyArray<RetrievedMessageStatus>
 ): TE.TaskEither<
-  string | CosmosErrors,
+  string | never,
   ReadonlyArray<RetrievedMessageStatus>
   // eslint-disable-next-line max-params
 > =>
   pipe(
     documents,
-    RA.map((d: RetrievedMessageStatus) =>
+    RA.map((retrievedDocument: RetrievedMessageStatus) =>
       pipe(
-        d,
+        retrievedDocument,
         isEligibleForTTL(telemetryClient),
         TE.chainW(() =>
           pipe(
-            // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
-            profileModel.findLastVersionByModelId([d.fiscalCode!]),
+            profileModel.findLastVersionByModelId([
+              // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
+              retrievedDocument.fiscalCode!
+            ]),
+            TE.mapLeft((err: CosmosErrors) => {
+              throw new Error(
+                `Something went wrong trying to find the profile | ${JSON.stringify(
+                  err
+                )}`
+              );
+            }),
             TE.chainW(
               flow(
                 TE.fromPredicate(
@@ -152,7 +161,11 @@ export const handleSetTTL = (
                   () => "This profile exist"
                 ),
                 TE.chainW(() =>
-                  setTTLForMessageAndStatus(d, messageStatusModel, messageModel)
+                  setTTLForMessageAndStatus(
+                    retrievedDocument,
+                    messageStatusModel,
+                    messageModel
+                  )
                 )
               )
             )
