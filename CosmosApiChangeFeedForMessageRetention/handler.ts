@@ -223,6 +223,17 @@ export const handleSetTTL = (
                     messageStatusModel,
                     messageModel
                   )
+                ),
+                TE.chainFirst(({ status, id }) =>
+                  TE.of(
+                    telemetryClient.trackEvent({
+                      name: `trigger.messages.cqrs.update-done`,
+                      properties: {
+                        id,
+                        status
+                      }
+                    })
+                  )
                 )
               )
             )
