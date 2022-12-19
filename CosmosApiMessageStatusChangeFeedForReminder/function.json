@@ -12,13 +12,6 @@
       "leaseCollectionPrefix": "CosmosApiMessageStatusChangeFeedForReminder",
       "createLeaseCollectionIfNotExists": true,
       "startFromBeginning": false
-    },
-    {
-      "type": "eventHub",
-      "name": "outputMessageStatus",
-      "eventHubName": "%MESSAGE_STATUS_FOR_REMINDER_TOPIC_NAME%",
-      "connection": "MESSAGE_STATUS_FOR_REMINDER_TOPIC_PRODUCER_CONNECTION_STRING",
-      "direction": "out"
     }
   ],
   "retry": {

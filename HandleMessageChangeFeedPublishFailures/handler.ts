@@ -4,9 +4,11 @@ import {
   RetrievedMessage
 } from "@pagopa/io-functions-commons/dist/src/models/message";
 import { BlobService } from "azure-storage";
-import { flow, pipe } from "fp-ts/lib/function";
+import { constVoid, flow, pipe } from "fp-ts/lib/function";
 import * as TE from "fp-ts/lib/TaskEither";
+import * as RA from "fp-ts/lib/ReadonlyArray";
 import * as t from "io-ts";
+import * as KP from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaProducerCompact";
 import { TelemetryClient, trackException } from "../utils/appinsights";
 import { errorsToError } from "../utils/conversions";
 import {
@@ -16,11 +18,7 @@ import {
   toTransientFailure,
   TransientFailure
 } from "../utils/errors";
-import { avroMessageFormatter } from "../utils/formatter/messagesAvroFormatter";
-import {
-  enrichMessageContent,
-  ThirdPartyDataWithCategoryFetcher
-} from "../utils/message";
+import { enrichMessageContent } from "../utils/message";
 
 const RetriableMessagePublishFailureInput = t.interface({
   body: RetrievedMessage,
@@ -47,7 +45,7 @@ export const HandleMessageChangeFeedPublishFailureHandler = (
   telemetryClient: TelemetryClient,
   messageModel: MessageModel,
   blobService: BlobService,
-  categoryFetcher: ThirdPartyDataWithCategoryFetcher
+  client: KP.KafkaProducerCompact<RetrievedMessage>
   // eslint-disable-next-line max-params
 ): Promise<Failure | void> =>
   pipe(
@@ -74,12 +72,18 @@ export const HandleMessageChangeFeedPublishFailureHandler = (
         )
       )
     ),
-    TE.map(
-      flow(avroMessageFormatter(categoryFetcher), avroMessage => {
-        // eslint-disable-next-line functional/immutable-data
-        context.bindings.messages = avroMessage.value;
-        context.done();
-      })
+    TE.chain(
+      flow(
+        RA.of,
+        KP.sendMessages(client),
+        TE.mapLeft(
+          flow(
+            RA.reduce("", (acc, err) => `${acc}|${err.message}`),
+            msg => toTransientFailure(Error(msg))()
+          )
+        ),
+        TE.map(constVoid)
+      )
     ),
     TE.mapLeft(err => {
       const isTransient = TransientFailure.is(err);

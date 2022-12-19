@@ -11,8 +11,7 @@ import { AzureContextTransport } from "@pagopa/io-functions-commons/dist/src/uti
 import { NonEmptyString } from "@pagopa/ts-commons/lib/strings";
 
 import { QueueClient } from "@azure/storage-queue";
-import { fromConfig } from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaProducerCompact";
-import { ValidableKafkaProducerConfig } from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaTypes";
+import { fromSas } from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaProducerCompact";
 import { initTelemetryClient } from "../utils/appinsights";
 import { getConfigOrThrow } from "../utils/config";
 import { cosmosdbInstance } from "../utils/cosmosdb";
@@ -34,25 +33,12 @@ const config = getConfigOrThrow();
 const telemetryClient = initTelemetryClient(
   config.APPINSIGHTS_INSTRUMENTATIONKEY
 );
-const messagesConfig = {
-  ...config.targetKafka,
-  sasl: {
-    ...config.targetKafka.sasl,
-    password: config.MessagesKafkaTopicConfig.MESSAGES_TOPIC_CONNECTION_STRING
-  },
-  topic: config.MessagesKafkaTopicConfig.MESSAGES_TOPIC_NAME
-};
 
-const messageTopic = {
-  ...messagesConfig,
-  messageFormatter: avroMessageFormatter(
+const kafkaClient = fromSas(
+  config.MESSAGES_TOPIC_CONNECTION_STRING,
+  avroMessageFormatter(
     getThirdPartyDataWithCategoryFetcher(config, telemetryClient)
   )
-};
-
-const kafkaClient = fromConfig(
-  messagesConfig as ValidableKafkaProducerConfig, // cast due to wrong association between Promise<void> and t.Function ('brokers' field)
-  messageTopic
 );
 
 const errorStorage = new QueueClient(
