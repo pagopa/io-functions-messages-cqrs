@@ -15,7 +15,6 @@ import {
 import { RejectedMessageStatusValueEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/RejectedMessageStatusValue";
 import { MessageModel } from "@pagopa/io-functions-commons/dist/src/models/message";
 import { FiscalCode } from "@pagopa/io-functions-commons/dist/generated/definitions/FiscalCode";
-import { CosmosErrors } from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model";
 import { Ttl } from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model_ttl";
 import { RejectionReasonEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/RejectionReason";
 import { TelemetryClient } from "../utils/appinsights";
@@ -97,7 +96,7 @@ export const setTTLForMessageAndStatus = (
         ttl: TTL_VALUE
       } as Partial<MessageStatus>
     ),
-    TE.mapLeft((err: CosmosErrors) => {
+    TE.mapLeft(err => {
       throw new Error(
         `Something went wrong trying to update the message ttl | ${JSON.stringify(
           err
@@ -110,7 +109,7 @@ export const setTTLForMessageAndStatus = (
         TTL_VALUE
       )
     ),
-    TE.mapLeft((err: CosmosErrors) => {
+    TE.mapLeft(err => {
       throw new Error(
         `Something went wrong trying to update the message-status ttl | ${JSON.stringify(
           err
@@ -163,7 +162,7 @@ export const handleSetTTL = (
                     // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
                     retrievedDocument.fiscalCode!
                   ]),
-                  TE.mapLeft((err: CosmosErrors) => {
+                  TE.mapLeft(err => {
                     throw new Error(
                       `Something went wrong trying to find the profile | ${JSON.stringify(
                         err
