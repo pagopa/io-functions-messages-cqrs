@@ -137,7 +137,7 @@ export const handleSetTTL = (
   telemetryClient: TelemetryClient,
   documents: ReadonlyArray<RetrievedMessageStatus>
 ): TE.TaskEither<
-  string | never,
+  string,
   ReadonlyArray<RetrievedMessageStatus>
   // eslint-disable-next-line max-params
 > =>
