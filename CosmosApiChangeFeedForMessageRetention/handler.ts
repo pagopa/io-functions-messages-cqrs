@@ -123,7 +123,7 @@ export const isRejectionReasonDefined = (
   retrievedMessageStatus: RetrievedMessageStatus
 ): boolean =>
   retrievedMessageStatus.status === RejectedMessageStatusValueEnum.REJECTED &&
-  retrievedMessageStatus.rejection_reason !== undefined;
+  retrievedMessageStatus.rejection_reason !== RejectionReasonEnum.UNKNOWN;
 
 /**
   Handle the logic of setting ttl for those message-status entries related to 

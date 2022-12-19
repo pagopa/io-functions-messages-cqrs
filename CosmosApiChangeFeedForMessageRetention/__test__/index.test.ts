@@ -22,6 +22,7 @@ const ttl = 500 as Ttl;
 
 const anEligibleDocument = {
   ...aMessageStatus,
+  rejection_reason: RejectionReasonEnum.UNKNOWN,
   status: RejectedMessageStatusValueEnum.REJECTED
 };
 
