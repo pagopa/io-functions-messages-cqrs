@@ -1,4 +1,5 @@
 import * as TE from "fp-ts/lib/TaskEither";
+import * as E from "fp-ts/lib/Either";
 import * as RA from "fp-ts/lib/ReadonlyArray";
 import * as O from "fp-ts/lib/Option";
 
@@ -151,7 +152,7 @@ export const handleSetTTL = (
         // if the item is not a RetrievedMessageStatus we simply track it with an event and skip it
         TE.mapLeft(() => {
           telemetryClient.trackEvent({
-            name: `trigger.messages.cqrs.release-timestamp-reached`
+            name: `trigger.messages.cqrs.item-not-RetrievedMessageStatus`
           });
           return "This item is not a RetrievedMessageStatus";
         }),
@@ -167,17 +168,27 @@ export const handleSetTTL = (
               retrievedDocument =>
                 // the rejection reason is not defined so we need to call the profileModel in order to verify if the user exists
                 pipe(
-                  profileModel.findLastVersionByModelId([
-                    // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
-                    retrievedDocument.fiscalCode!
-                  ]),
-                  TE.mapLeft(err => {
-                    throw new Error(
-                      `Something went wrong trying to find the profile | ${JSON.stringify(
-                        err
-                      )}`
-                    );
+                  retrievedDocument.fiscalCode,
+                  FiscalCode.decode,
+                  E.mapLeft(() => {
+                    telemetryClient.trackEvent({
+                      name: `trigger.messages.cqrs.invalid-FiscalCode`
+                    });
+                    return "This item has not a valid FiscalCode";
                   }),
+                  TE.fromEither,
+                  TE.chainW(fiscalCode =>
+                    pipe(
+                      profileModel.findLastVersionByModelId([fiscalCode]),
+                      TE.mapLeft(err => {
+                        throw new Error(
+                          `Something went wrong trying to find the profile | ${JSON.stringify(
+                            err
+                          )}`
+                        );
+                      })
+                    )
+                  ),
                   TE.chainW(
                     flow(
                       TE.fromPredicate(
