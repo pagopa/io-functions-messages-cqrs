@@ -1,8 +1,7 @@
 import { AzureFunction, Context } from "@azure/functions";
 import {
   MessageStatusModel,
-  MESSAGE_STATUS_COLLECTION_NAME,
-  RetrievedMessageStatus
+  MESSAGE_STATUS_COLLECTION_NAME
 } from "@pagopa/io-functions-commons/dist/src/models/message_status";
 import {
   ProfileModel,
@@ -40,7 +39,7 @@ const telemetryClient: TelemetryClient = initTelemetryClient(
 
 const run: AzureFunction = async (
   _: Context,
-  documents: ReadonlyArray<RetrievedMessageStatus>
+  documents: ReadonlyArray<unknown>
 ) =>
   await handleSetTTL(
     messageStatusModel,

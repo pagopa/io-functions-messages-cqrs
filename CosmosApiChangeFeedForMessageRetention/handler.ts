@@ -135,7 +135,7 @@ export const handleSetTTL = (
   messageModel: MessageModel,
   profileModel: ProfileModel,
   telemetryClient: TelemetryClient,
-  documents: ReadonlyArray<RetrievedMessageStatus>
+  documents: ReadonlyArray<unknown>
 ): TE.TaskEither<
   string,
   ReadonlyArray<RetrievedMessageStatus>
@@ -143,19 +143,28 @@ export const handleSetTTL = (
 > =>
   pipe(
     documents,
-    RA.map((retrievedDocument: RetrievedMessageStatus) =>
+    RA.map((doc: unknown) =>
       pipe(
-        retrievedDocument,
-        isEligibleForTTL(telemetryClient),
+        doc,
+        RetrievedMessageStatus.decode,
+        TE.fromEither,
+        // if the item is not a RetrievedMessageStatus we simply track it with an event and skip it
+        TE.mapLeft(() => {
+          telemetryClient.trackEvent({
+            name: `trigger.messages.cqrs.release-timestamp-reached`
+          });
+          return "This item is not a RetrievedMessageStatus";
+        }),
+        TE.chainW(isEligibleForTTL(telemetryClient)),
         TE.chainW(
           flow(
             // before all we check if the rejectionReason is defined
             TE.fromPredicate(
               isRejectionReasonDefined,
-              () => "rejectionReason not defined"
+              retrievedDocument => retrievedDocument
             ),
             TE.fold(
-              () =>
+              retrievedDocument =>
                 // the rejection reason is not defined so we need to call the profileModel in order to verify if the user exists
                 pipe(
                   profileModel.findLastVersionByModelId([
@@ -189,7 +198,7 @@ export const handleSetTTL = (
               flow(
                 // the rejection reason is defined, we need to check if it is USER_NOT_FOUND, otherwise we do not set the ttl
                 TE.fromPredicate(
-                  () =>
+                  retrievedDocument =>
                     RejectedMessageStatusValueEnum.REJECTED ===
                       retrievedDocument.status &&
                     RejectionReasonEnum.USER_NOT_FOUND ===
@@ -197,7 +206,7 @@ export const handleSetTTL = (
                   () => "The reason of the rejection is not USER_NOT_FOUND"
                 ),
                 // eslint-disable-next-line
-                TE.chainW(() =>
+                TE.chainW(retrievedDocument =>
                   setTTLForMessageAndStatus(
                     retrievedDocument,
                     messageStatusModel,
