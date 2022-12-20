@@ -160,7 +160,7 @@ describe("handleSetTTL", () => {
     expect(mockUpdateTTLForAllVersions).toHaveBeenCalledTimes(1);
   });
 
-  it("Should call the setTTLForMessageAndStatus without calling the profileModel.findLastVersionByModelId", async () => {
+  it("Should not call the setTTLForMessageAndStatus and the profileModel.findLastVersionByModelId", async () => {
     /*
      * we are passing a document with rejection_reason setted to SERVICE_NOT_ALLOWED,
      * mockProfileFindLast, mockPatch and mockUpdateTTLForAllVersions should never be called then cause we don't want to set the ttl
