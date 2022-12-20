@@ -1,8 +1,12 @@
 import * as TE from "fp-ts/lib/TaskEither";
 import * as O from "fp-ts/lib/Option";
-import { CosmosResource } from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model";
+import {
+  CosmosErrors,
+  CosmosResource
+} from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model";
 import { aFiscalCode } from "./message";
 import {
+  Profile,
   ProfileModel,
   RetrievedProfile
 } from "@pagopa/io-functions-commons/dist/src/models/profile";
@@ -40,8 +44,9 @@ export const aRetrievedProfile: RetrievedProfile = {
   pushNotificationsContentType: "UNSET"
 };
 
-export const mockProfileFindLast = jest.fn(() =>
-  TE.of(O.some(aRetrievedProfile))
+export const mockProfileFindLast = jest.fn(
+  (): TE.TaskEither<CosmosErrors, O.Option<RetrievedProfile>> =>
+    TE.of(O.some(aRetrievedProfile))
 );
 export const mockProfileModel = ({
   findLastVersionByModelId: mockProfileFindLast

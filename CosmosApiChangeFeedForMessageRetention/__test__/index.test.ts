@@ -220,4 +220,21 @@ describe("handleSetTTL", () => {
       `Something went wrong trying to update the message-status ttl | {"kind":"COSMOS_EMPTY_RESPONSE"}`
     );
   });
+
+  it("Should throw an error in case of the retrieve of the profile fails", async () => {
+    mockProfileFindLast.mockReturnValue(
+      TE.left({ kind: "COSMOS_EMPTY_RESPONSE" })
+    );
+    const r = handleSetTTL(
+      mockMessageStatusModel,
+      mockMessageModel,
+      mockProfileModel,
+      mockTelemetryClient,
+      mockDocuments
+    )();
+
+    await expect(r).rejects.toThrowError(
+      `Something went wrong trying to find the profile | {"kind":"COSMOS_EMPTY_RESPONSE"}`
+    );
+  });
 });
