@@ -6,6 +6,7 @@ import { MessageContentType } from "../../generated/avro/dto/MessageContentTypeE
 import { TelemetryClient } from "../../utils/appinsights";
 import { avroMessageFormatter } from "../../utils/formatter/messagesAvroFormatter";
 import { ThirdPartyDataWithCategoryFetcher } from "../../utils/message";
+import * as KP from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaProducerCompact";
 import {
   aMessageContent,
   aRetrievedMessageWithoutContent
@@ -58,29 +59,39 @@ const aMessageCategoryFetcher: ThirdPartyDataWithCategoryFetcher = jest.fn(
   sId => ({ category: MessageContentType.GENERIC })
 );
 
+// ----------------------
+// Variables
+// ----------------------
+
+const kafkaClient = {} as any;
+
+const sendMessagesMock = jest.fn().mockImplementation(_ => TE.right([]));
+
+jest.spyOn(KP, "sendMessages").mockImplementation(_ => sendMessagesMock);
+
 describe("HandleMessageChangeFeedPublishFailureHandler", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("should write an avro message on message bindings", async () => {
+  it("should write an avro message on kafka client", async () => {
     const res = await HandleMessageChangeFeedPublishFailureHandler(
       functionsContextMock,
       aRetriableInput,
       telemetryClientMock,
       mockMessageModel,
       anyParam,
-      aMessageCategoryFetcher
+      kafkaClient
     );
     expect(res).toEqual(void 0);
     expect(telemetryClientMock.trackException).not.toHaveBeenCalled();
-    expect(functionsContextMock.bindings.messages).toEqual(
-      avroMessageFormatter(aMessageCategoryFetcher)({
+    expect(sendMessagesMock).toHaveBeenCalledWith([
+      {
         ...inputMessage.body,
         content: aMessageContent,
         kind: "IRetrievedMessageWithContent"
-      }).value
-    );
+      }
+    ]);
   });
 
   it("should throw if Transient failure occurs", async () => {
@@ -94,7 +105,7 @@ describe("HandleMessageChangeFeedPublishFailureHandler", () => {
         telemetryClientMock,
         mockMessageModel,
         anyParam,
-        aMessageCategoryFetcher
+        kafkaClient
       )
     ).rejects.toBeDefined();
     expect(telemetryClientMock.trackException).toHaveBeenCalledWith(
@@ -112,7 +123,7 @@ describe("HandleMessageChangeFeedPublishFailureHandler", () => {
         telemetryClientMock,
         mockMessageModel,
         anyParam,
-        aMessageCategoryFetcher
+        kafkaClient
       )
     ).resolves.toEqual(
       expect.objectContaining({
@@ -130,7 +141,7 @@ describe("HandleMessageChangeFeedPublishFailureHandler", () => {
         telemetryClientMock,
         mockMessageModel,
         anyParam,
-        aMessageCategoryFetcher
+        kafkaClient
       )
     ).resolves.toEqual(
       expect.objectContaining({

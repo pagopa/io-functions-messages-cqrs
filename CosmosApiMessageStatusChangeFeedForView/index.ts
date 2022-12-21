@@ -1,8 +1,7 @@
 import * as winston from "winston";
 import { Context } from "@azure/functions";
 import { AzureContextTransport } from "@pagopa/io-functions-commons/dist/src/utils/logging";
-import { fromConfig } from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaProducerCompact";
-import { ValidableKafkaProducerConfig } from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaTypes";
+import { fromSas } from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaProducerCompact";
 import { getConfigOrThrow } from "../utils/config";
 import { jsonMessageStatusFormatter } from "../utils/formatter/messageStatusJsonFormatter";
 import { handleMessageStatusChangeFeedForView } from "./handler";
@@ -16,24 +15,9 @@ winston.add(contextTransport);
 
 const config = getConfigOrThrow();
 
-const messageStatusConfig = {
-  ...config.targetKafka,
-  brokers: [config.MESSAGE_STATUS_FOR_VIEW_BROKERS],
-  sasl: {
-    ...config.targetKafka.sasl,
-    password: config.MESSAGE_STATUS_FOR_VIEW_TOPIC_PRODUCER_CONNECTION_STRING
-  },
-  topic: config.MESSAGE_STATUS_FOR_VIEW_TOPIC_NAME
-};
-
-const messageStatusTopic = {
-  ...messageStatusConfig,
-  messageFormatter: jsonMessageStatusFormatter()
-};
-
-const kafkaClient = fromConfig(
-  messageStatusConfig as ValidableKafkaProducerConfig, // cast due to wrong association between Promise<void> and t.Function ('brokers' field)
-  messageStatusTopic
+const kafkaClient = fromSas(
+  config.MESSAGE_STATUS_FOR_VIEW_TOPIC_PRODUCER_CONNECTION_STRING,
+  jsonMessageStatusFormatter()
 );
 
 const run = async (

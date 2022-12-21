@@ -1,4 +1,5 @@
 ﻿import { AzureFunction, Context } from "@azure/functions";
+import { fromSas } from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaProducerCompact";
 import {
   MessageModel,
   MESSAGE_COLLECTION_NAME
@@ -9,6 +10,7 @@ import { initTelemetryClient } from "../utils/appinsights";
 import { getConfigOrThrow } from "../utils/config";
 import { cosmosdbInstance } from "../utils/cosmosdb";
 import { Failure } from "../utils/errors";
+import { avroMessageFormatter } from "../utils/formatter/messagesAvroFormatter";
 import { getThirdPartyDataWithCategoryFetcher } from "../utils/message";
 import { HandleMessageChangeFeedPublishFailureHandler } from "./handler";
 
@@ -27,6 +29,13 @@ const telemetryClient = initTelemetryClient(
   config.APPINSIGHTS_INSTRUMENTATIONKEY
 );
 
+const kafkaClient = fromSas(
+  config.MESSAGES_TOPIC_CONNECTION_STRING,
+  avroMessageFormatter(
+    getThirdPartyDataWithCategoryFetcher(config, telemetryClient)
+  )
+);
+
 export const index: AzureFunction = (
   context: Context,
   message: unknown
@@ -37,7 +46,7 @@ export const index: AzureFunction = (
     telemetryClient,
     messageModel,
     messageContentBlobService,
-    getThirdPartyDataWithCategoryFetcher(config, telemetryClient)
+    kafkaClient
   );
 
 export default index;

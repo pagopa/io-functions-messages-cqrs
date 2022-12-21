@@ -6,14 +6,7 @@
       "name": "messagepublishfailure",
       "queueName": "%MESSAGE_PAYMENT_UPDATER_FAILURE_QUEUE_NAME%",
       "connection":"INTERNAL_STORAGE_CONNECTION_STRING"
-    },
-    {
-      "type": "eventHub",
-      "name": "messages",
-      "eventHubName": "%MESSAGES_TOPIC_NAME%",
-      "connection": "MESSAGES_TOPIC_CONNECTION_STRING",
-      "direction": "out"
-  }
+    }
   ],
   "retry": {
     "strategy": "exponentialBackoff",
