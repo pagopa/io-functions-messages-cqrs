@@ -1,4 +1,5 @@
 import * as TE from "fp-ts/lib/TaskEither";
+import * as T from "fp-ts/lib/Task";
 import * as E from "fp-ts/lib/Either";
 import * as RA from "fp-ts/lib/ReadonlyArray";
 import * as O from "fp-ts/lib/Option";
@@ -137,11 +138,7 @@ export const handleSetTTL = (
   profileModel: ProfileModel,
   telemetryClient: TelemetryClient,
   documents: ReadonlyArray<unknown>
-): TE.TaskEither<
-  string,
-  ReadonlyArray<RetrievedMessageStatus>
-  // eslint-disable-next-line max-params
-> =>
+): T.Task<ReadonlyArray<E.Either<string, RetrievedMessageStatus>>> =>
   pipe(
     documents,
     RA.map((doc: unknown) =>
@@ -241,5 +238,5 @@ export const handleSetTTL = (
         )
       )
     ),
-    TE.sequenceArray
+    T.sequenceArray
   );

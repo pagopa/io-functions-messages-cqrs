@@ -1,6 +1,7 @@
 import * as O from "fp-ts/lib/Option";
 import * as TE from "fp-ts/lib/TaskEither";
 import * as E from "fp-ts/lib/Either";
+import * as RA from "fp-ts/lib/ReadonlyArray";
 
 import { Ttl } from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model_ttl";
 import { RejectedMessageStatusValueEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/RejectedMessageStatusValue";
@@ -109,7 +110,7 @@ describe("handleSetTTL", () => {
       mockTelemetryClient,
       mockDocuments
     )();
-    expect(E.isLeft(r)).toBeTruthy();
+    expect(RA.lefts(r)).toHaveLength(6);
     expect(mockProfileFindLast).toHaveBeenCalledTimes(4);
     expect(mockUpdateTTLForAllVersions).not.toHaveBeenCalled();
     expect(mockPatch).not.toHaveBeenCalled();
@@ -131,7 +132,7 @@ describe("handleSetTTL", () => {
       mockTelemetryClient,
       mockDocuments
     )();
-    expect(E.isLeft(r)).toBeTruthy();
+    expect(RA.rights(r)).toHaveLength(4);
     expect(mockProfileFindLast).toHaveBeenCalledTimes(4);
     expect(mockUpdateTTLForAllVersions).toHaveBeenCalledTimes(4);
     expect(mockPatch).toHaveBeenCalledTimes(4);
@@ -154,7 +155,7 @@ describe("handleSetTTL", () => {
         }
       ]
     )();
-    expect(E.isRight(r)).toBeTruthy();
+    expect(E.isRight(r[0])).toBeTruthy();
     expect(mockProfileFindLast).not.toHaveBeenCalled();
     expect(mockPatch).toHaveBeenCalledTimes(1);
     expect(mockUpdateTTLForAllVersions).toHaveBeenCalledTimes(1);
@@ -179,7 +180,7 @@ describe("handleSetTTL", () => {
         aMessageStatus
       ]
     )();
-    expect(E.isLeft(r)).toBeTruthy();
+    expect(RA.lefts(r)).toHaveLength(3);
     expect(mockProfileFindLast).not.toHaveBeenCalled();
     expect(mockPatch).not.toHaveBeenCalled();
     expect(mockUpdateTTLForAllVersions).not.toHaveBeenCalled();
