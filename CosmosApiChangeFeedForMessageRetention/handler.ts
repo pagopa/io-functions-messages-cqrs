@@ -20,6 +20,7 @@ import { FiscalCode } from "@pagopa/io-functions-commons/dist/generated/definiti
 import { Ttl } from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model_ttl";
 import { RejectionReasonEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/RejectionReason";
 import { TelemetryClient } from "../utils/appinsights";
+import { inspect } from "util";
 
 /**
   the timestamp related to 2022-11-23   20:00:00
@@ -103,7 +104,7 @@ export const setTTLForMessageAndStatus = (
       throw new Error(
         `Something went wrong trying to update the message ttl for message with id: ${
           document.id
-        } | ${JSON.stringify(err)}`
+        } | ${JSON.stringify(inspect(err))}`
       );
     }),
     TE.chain(() =>
@@ -116,7 +117,7 @@ export const setTTLForMessageAndStatus = (
       throw new Error(
         `Something went wrong trying to update the message-status ttl for message with id: ${
           document.id
-        } | ${JSON.stringify(err)}`
+        } | ${JSON.stringify(inspect(err))}`
       );
     }),
     TE.map(() => document)
@@ -189,7 +190,7 @@ export const handleSetTTL = (
                         throw new Error(
                           `Something went wrong trying to find the profile for message with id: ${
                             retrievedDocument.id
-                          } | ${JSON.stringify(err)}`
+                          } | ${JSON.stringify(inspect(err))}`
                         );
                       })
                     )
