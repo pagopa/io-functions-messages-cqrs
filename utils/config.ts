@@ -13,44 +13,59 @@ import { readableReport } from "@pagopa/ts-commons/lib/reporters";
 import { NonEmptyString } from "@pagopa/ts-commons/lib/strings";
 
 import { AzureEventhubSasFromString } from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaProducerCompact";
+import { IsoDateFromString } from "@pagopa/ts-commons/lib/dates";
+
+export const MessageChangeFeedConfig = t.type({
+  MESSAGE_CHANGE_FEED_LEASE_PREFIX: NonEmptyString,
+  MESSAGE_CHANGE_FEED_START_TIME: NonEmptyString
+});
+export type MessageChangeFeedConfig = t.TypeOf<typeof MessageChangeFeedConfig>;
 // global app configuration
 export type IConfig = t.TypeOf<typeof IConfig>;
-// eslint-disable-next-line @typescript-eslint/ban-types
-export const IConfig = t.interface({
-  APIM_BASE_URL: NonEmptyString,
-  APIM_SUBSCRIPTION_KEY: NonEmptyString,
-  APPINSIGHTS_INSTRUMENTATIONKEY: NonEmptyString,
+export const IConfig = t.intersection([
+  t.type({
+    APIM_BASE_URL: NonEmptyString,
+    APIM_SUBSCRIPTION_KEY: NonEmptyString,
+    APPINSIGHTS_INSTRUMENTATIONKEY: NonEmptyString,
 
-  AzureWebJobsStorage: NonEmptyString,
+    AzureWebJobsStorage: NonEmptyString,
 
-  COSMOSDB_CONNECTION_STRING: NonEmptyString,
-  COSMOSDB_KEY: NonEmptyString,
-  COSMOSDB_NAME: NonEmptyString,
-  COSMOSDB_URI: NonEmptyString,
+    COSMOSDB_CONNECTION_STRING: NonEmptyString,
+    COSMOSDB_KEY: NonEmptyString,
+    COSMOSDB_NAME: NonEmptyString,
+    COSMOSDB_URI: NonEmptyString,
 
-  INTERNAL_STORAGE_CONNECTION_STRING: NonEmptyString,
+    INTERNAL_STORAGE_CONNECTION_STRING: NonEmptyString,
 
-  MESSAGES_TOPIC_CONNECTION_STRING: AzureEventhubSasFromString,
-  MESSAGE_CONTENT_STORAGE_CONNECTION: NonEmptyString,
-  MESSAGE_PAYMENT_UPDATER_FAILURE_QUEUE_NAME: NonEmptyString,
+    MESSAGES_TOPIC_CONNECTION_STRING: AzureEventhubSasFromString,
+    MESSAGE_CONTENT_STORAGE_CONNECTION: NonEmptyString,
+    MESSAGE_PAYMENT_UPDATER_FAILURE_QUEUE_NAME: NonEmptyString,
 
-  MESSAGE_STATUS_FOR_REMINDER_TOPIC_PRODUCER_CONNECTION_STRING: AzureEventhubSasFromString,
-  MESSAGE_STATUS_FOR_VIEW_BROKERS: NonEmptyString,
-  MESSAGE_STATUS_FOR_VIEW_TOPIC_CONSUMER_CONNECTION_STRING: AzureEventhubSasFromString,
-  MESSAGE_STATUS_FOR_VIEW_TOPIC_CONSUMER_GROUP: NonEmptyString,
-  MESSAGE_STATUS_FOR_VIEW_TOPIC_NAME: NonEmptyString,
-  MESSAGE_STATUS_FOR_VIEW_TOPIC_PRODUCER_CONNECTION_STRING: AzureEventhubSasFromString,
+    MESSAGE_STATUS_FOR_REMINDER_TOPIC_PRODUCER_CONNECTION_STRING: AzureEventhubSasFromString,
+    MESSAGE_STATUS_FOR_VIEW_BROKERS: NonEmptyString,
+    MESSAGE_STATUS_FOR_VIEW_TOPIC_CONSUMER_CONNECTION_STRING: AzureEventhubSasFromString,
+    MESSAGE_STATUS_FOR_VIEW_TOPIC_CONSUMER_GROUP: NonEmptyString,
+    MESSAGE_STATUS_FOR_VIEW_TOPIC_NAME: NonEmptyString,
+    MESSAGE_STATUS_FOR_VIEW_TOPIC_PRODUCER_CONNECTION_STRING: AzureEventhubSasFromString,
 
-  MESSAGE_VIEW_PAYMENT_UPDATE_FAILURE_QUEUE_NAME: NonEmptyString,
-  MESSAGE_VIEW_UPDATE_FAILURE_QUEUE_NAME: NonEmptyString,
-  PN_SERVICE_ID: NonEmptyString,
-  QueueStorageConnection: NonEmptyString,
+    MESSAGE_VIEW_PAYMENT_UPDATE_FAILURE_QUEUE_NAME: NonEmptyString,
+    MESSAGE_VIEW_UPDATE_FAILURE_QUEUE_NAME: NonEmptyString,
+    PN_SERVICE_ID: NonEmptyString,
+    QueueStorageConnection: NonEmptyString,
 
-  isProduction: t.boolean
-});
+    isProduction: t.boolean
+  }),
+  MessageChangeFeedConfig
+]);
 
 export const envConfig = {
   ...process.env,
+  MESSAGE_CHANGE_FEED_START_TIME: pipe(
+    process.env.MESSAGE_CHANGE_FEED_START_TIME,
+    IsoDateFromString.decode,
+    E.map(dateFromString => dateFromString.toISOString()),
+    E.getOrElse(() => "")
+  ),
   isProduction: process.env.NODE_ENV === "production"
 };
 
