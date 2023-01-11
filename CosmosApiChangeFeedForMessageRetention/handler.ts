@@ -103,7 +103,7 @@ export const setTTLForMessageAndStatus = (
       throw new Error(
         `Something went wrong trying to update the message ttl for message with id: ${
           document.id
-        }| ${JSON.stringify(err)}`
+        } | ${JSON.stringify(err)}`
       );
     }),
     TE.chain(() =>
@@ -173,9 +173,9 @@ export const handleSetTTL = (
                     telemetryClient.trackEvent({
                       name: `trigger.messages.cqrs.invalid-FiscalCode`,
                       properties: {
+                        fiscalCode: retrievedDocument.fiscalCode ?? "",
                         id: retrievedDocument.id,
-                        messageId: retrievedDocument.messageId,
-                        fiscalCode: retrievedDocument.fiscalCode ?? ""
+                        messageId: retrievedDocument.messageId
                       },
                       tagOverrides: { samplingEnabled: "false" }
                     });

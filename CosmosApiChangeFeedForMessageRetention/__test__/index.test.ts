@@ -199,7 +199,7 @@ describe("handleSetTTL", () => {
     )();
 
     await expect(r).rejects.toThrowError(
-      'Something went wrong trying to update the message ttl | {"kind":"COSMOS_EMPTY_RESPONSE"}'
+      `Something went wrong trying to update the message ttl for message with id: A_MESSAGE_ID-0 | {"kind":"COSMOS_EMPTY_RESPONSE"}`
     );
   });
 
@@ -218,7 +218,7 @@ describe("handleSetTTL", () => {
     )();
 
     await expect(r).rejects.toThrowError(
-      `Something went wrong trying to update the message-status ttl | {"kind":"COSMOS_EMPTY_RESPONSE"}`
+      `Something went wrong trying to update the message-status ttl for message with id: A_MESSAGE_ID-0 | {"kind":"COSMOS_EMPTY_RESPONSE"}`
     );
   });
 
@@ -235,7 +235,7 @@ describe("handleSetTTL", () => {
     )();
 
     await expect(r).rejects.toThrowError(
-      `Something went wrong trying to find the profile | {"kind":"COSMOS_EMPTY_RESPONSE"}`
+      `Something went wrong trying to find the profile for message with id: A_MESSAGE_ID-0 | {"kind":"COSMOS_EMPTY_RESPONSE"}`
     );
   });
 });
