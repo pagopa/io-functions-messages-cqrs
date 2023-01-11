@@ -5,7 +5,7 @@
       "name": "messageStatusDocuments",
       "direction": "in",
       "leaseCollectionName": "leaseMessageStatusForMessageRetention",
-      "leaseCollectionPrefix": "%LEASE_COLLECTION_PREFIX%-",
+      "leaseCollectionPrefix": "%LEASE_COLLECTION_PREFIX%_",
       "connectionStringSetting": "COSMOSDB_CONNECTION_STRING",
       "databaseName": "%COSMOSDB_NAME%",
       "collectionName": "message-status",
