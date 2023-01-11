@@ -101,9 +101,9 @@ export const setTTLForMessageAndStatus = (
     ),
     TE.mapLeft(err => {
       throw new Error(
-        `Something went wrong trying to update the message ttl | ${JSON.stringify(
-          err
-        )}`
+        `Something went wrong trying to update the message ttl for message with id: ${
+          document.id
+        }| ${JSON.stringify(err)}`
       );
     }),
     TE.chain(() =>
@@ -114,9 +114,9 @@ export const setTTLForMessageAndStatus = (
     ),
     TE.mapLeft(err => {
       throw new Error(
-        `Something went wrong trying to update the message-status ttl | ${JSON.stringify(
-          err
-        )}`
+        `Something went wrong trying to update the message-status ttl for message with id: ${
+          document.id
+        } | ${JSON.stringify(err)}`
       );
     }),
     TE.map(() => document)
@@ -187,9 +187,9 @@ export const handleSetTTL = (
                       profileModel.findLastVersionByModelId([fiscalCode]),
                       TE.mapLeft(err => {
                         throw new Error(
-                          `Something went wrong trying to find the profile | ${JSON.stringify(
-                            err
-                          )}`
+                          `Something went wrong trying to find the profile for message with id: ${
+                            retrievedDocument.id
+                          } | ${JSON.stringify(err)}`
                         );
                       })
                     )
