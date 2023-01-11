@@ -1,3 +1,4 @@
+import { inspect } from "util";
 import * as TE from "fp-ts/lib/TaskEither";
 import * as T from "fp-ts/lib/Task";
 import * as E from "fp-ts/lib/Either";
@@ -20,7 +21,6 @@ import { FiscalCode } from "@pagopa/io-functions-commons/dist/generated/definiti
 import { Ttl } from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model_ttl";
 import { RejectionReasonEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/RejectionReason";
 import { TelemetryClient } from "../utils/appinsights";
-import { inspect } from "util";
 
 /**
   the timestamp related to 2022-11-23   20:00:00

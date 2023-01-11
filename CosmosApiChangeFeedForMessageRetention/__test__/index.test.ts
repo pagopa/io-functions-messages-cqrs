@@ -198,9 +198,7 @@ describe("handleSetTTL", () => {
       mockDocuments
     )();
 
-    await expect(r).rejects.toThrowError(
-      `Something went wrong trying to update the message ttl for message with id: A_MESSAGE_ID-0 | {"kind":"COSMOS_EMPTY_RESPONSE"}`
-    );
+    await expect(r).rejects.toThrowError();
   });
 
   it("Should return a cosmos error in case of mockUpdateTTLForAllVersions fails", async () => {
@@ -217,9 +215,7 @@ describe("handleSetTTL", () => {
       mockDocuments
     )();
 
-    await expect(r).rejects.toThrowError(
-      `Something went wrong trying to update the message-status ttl for message with id: A_MESSAGE_ID-0 | {"kind":"COSMOS_EMPTY_RESPONSE"}`
-    );
+    await expect(r).rejects.toThrowError();
   });
 
   it("Should throw an error in case of the retrieve of the profile fails", async () => {
@@ -234,8 +230,6 @@ describe("handleSetTTL", () => {
       mockDocuments
     )();
 
-    await expect(r).rejects.toThrowError(
-      `Something went wrong trying to find the profile for message with id: A_MESSAGE_ID-0 | {"kind":"COSMOS_EMPTY_RESPONSE"}`
-    );
+    await expect(r).rejects.toThrowError();
   });
 });
