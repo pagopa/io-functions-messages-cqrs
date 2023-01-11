@@ -169,7 +169,10 @@ export const handleSetTTL = (
                   FiscalCode.decode,
                   E.mapLeft(() => {
                     telemetryClient.trackEvent({
-                      name: `trigger.messages.cqrs.invalid-FiscalCode`
+                      name: `trigger.messages.cqrs.invalid-FiscalCode`,
+                      properties: {
+                        id: retrievedDocument.id
+                      }
                     });
                     return "This item has not a valid FiscalCode";
                   }),
