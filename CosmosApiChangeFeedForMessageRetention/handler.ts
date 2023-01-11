@@ -67,7 +67,8 @@ export const isEligibleForTTL = (
         () => isBeforeDate(document._ts, RELEASE_TIMESTAMP),
         () => {
           telemetryClient.trackEvent({
-            name: `trigger.messages.cqrs.release-timestamp-reached`
+            name: `trigger.messages.cqrs.release-timestamp-reached`,
+            tagOverrides: { samplingEnabled: "false" }
           });
           // eslint-disable-next-line no-underscore-dangle
           return `the timestamp of the document ${document.id} (${document._ts}) is after the RELEASE_TIMESTAMP ${RELEASE_TIMESTAMP}`;
@@ -149,7 +150,8 @@ export const handleSetTTL = (
         // if the item is not a RetrievedMessageStatus we simply track it with an event and skip it
         TE.mapLeft(() => {
           telemetryClient.trackEvent({
-            name: `trigger.messages.cqrs.item-not-RetrievedMessageStatus`
+            name: `trigger.messages.cqrs.item-not-RetrievedMessageStatus`,
+            tagOverrides: { samplingEnabled: "false" }
           });
           return "This item is not a RetrievedMessageStatus";
         }),
@@ -172,8 +174,10 @@ export const handleSetTTL = (
                       name: `trigger.messages.cqrs.invalid-FiscalCode`,
                       properties: {
                         id: retrievedDocument.id,
-                        messageId: retrievedDocument.messageId
-                      }
+                        messageId: retrievedDocument.messageId,
+                        fiscalCode: retrievedDocument.fiscalCode ?? ""
+                      },
+                      tagOverrides: { samplingEnabled: "false" }
                     });
                     return "This item has not a valid FiscalCode";
                   }),
@@ -232,7 +236,8 @@ export const handleSetTTL = (
                       properties: {
                         id,
                         status
-                      }
+                      },
+                      tagOverrides: { samplingEnabled: "false" }
                     })
                   )
                 )
