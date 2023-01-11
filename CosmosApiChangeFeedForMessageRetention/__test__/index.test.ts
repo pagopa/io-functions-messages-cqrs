@@ -35,8 +35,9 @@ const mockDocuments = [
   aMessageStatus
 ];
 
+const mockTrackEvent = jest.fn(_ => void 0);
 const mockTelemetryClient = ({
-  trackEvent: jest.fn(_ => void 0)
+  trackEvent: mockTrackEvent
 } as unknown) as TelemetryClient;
 
 describe("isEligibleForTTL", () => {
@@ -110,11 +111,20 @@ describe("handleSetTTL", () => {
       mockTelemetryClient,
       mockDocuments
     )();
+
     expect(RA.lefts(r)).toHaveLength(6);
     expect(mockProfileFindLast).toHaveBeenCalledTimes(4);
     expect(mockUpdateTTLForAllVersions).not.toHaveBeenCalled();
     expect(mockPatch).not.toHaveBeenCalled();
-    expect(mockTelemetryClient.trackEvent).not.toHaveBeenCalled();
+    expect(mockTelemetryClient.trackEvent).toHaveBeenCalledTimes(4);
+    expect(mockTelemetryClient.trackEvent).toHaveBeenCalledWith({
+      name: "trigger.messages.cqrs.update-not-performed",
+      properties: { reason: "This profile exist" }
+    });
+    expect(mockTelemetryClient.trackEvent).toHaveBeenLastCalledWith({
+      name: "trigger.messages.cqrs.update-not-performed",
+      properties: { reason: "This profile exist" }
+    });
   });
 
   it("should set the ttl for 4 documents for not registered users", async () => {
@@ -132,11 +142,14 @@ describe("handleSetTTL", () => {
       mockTelemetryClient,
       mockDocuments
     )();
+
+    console.log(r);
+
     expect(RA.rights(r)).toHaveLength(4);
     expect(mockProfileFindLast).toHaveBeenCalledTimes(4);
     expect(mockUpdateTTLForAllVersions).toHaveBeenCalledTimes(4);
     expect(mockPatch).toHaveBeenCalledTimes(4);
-    expect(mockTelemetryClient.trackEvent).not.toHaveBeenCalled();
+    expect(mockTrackEvent).toHaveBeenCalled();
   });
 
   it("Should call the setTTLForMessageAndStatus without calling the profileModel.findLastVersionByModelId", async () => {
@@ -155,6 +168,7 @@ describe("handleSetTTL", () => {
         }
       ]
     )();
+
     expect(E.isRight(r[0])).toBeTruthy();
     expect(mockProfileFindLast).not.toHaveBeenCalled();
     expect(mockPatch).toHaveBeenCalledTimes(1);

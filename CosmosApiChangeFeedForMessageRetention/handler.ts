@@ -229,19 +229,33 @@ export const handleSetTTL = (
                     messageStatusModel,
                     messageModel
                   )
-                ),
-                TE.chainFirst(({ status, id }) =>
-                  TE.of(
-                    telemetryClient.trackEvent({
-                      name: `trigger.messages.cqrs.update-done`,
-                      properties: {
-                        id,
-                        status
-                      },
-                      tagOverrides: { samplingEnabled: "false" }
-                    })
-                  )
                 )
+              )
+            ),
+            T.map(
+              E.bimap(
+                reason => {
+                  telemetryClient.trackEvent({
+                    name: `trigger.messages.cqrs.update-not-performed`,
+                    properties: {
+                      reason
+                    }
+                  });
+
+                  return reason;
+                },
+                document => {
+                  telemetryClient.trackEvent({
+                    name: `trigger.messages.cqrs.update-done`,
+                    properties: {
+                      id: document.id,
+                      status: document.status
+                    },
+                    tagOverrides: { samplingEnabled: "false" }
+                  });
+
+                  return document;
+                }
               )
             )
           )
