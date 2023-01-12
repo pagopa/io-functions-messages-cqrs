@@ -22,6 +22,12 @@ import { Ttl } from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model_
 import { RejectionReasonEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/RejectionReason";
 import { TelemetryClient } from "../utils/appinsights";
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type NotComputedDocument = {
+  readonly document?: RetrievedMessageStatus;
+  readonly reason: string;
+};
+
 /**
   the timestamp related to 2022-11-23   20:00:00
   we have released the version of fn-service that adds the TTL to message and message-status,
@@ -53,9 +59,9 @@ export const isEligibleForTTL = (
   telemetryClient: TelemetryClient
 ): ((
   document: RetrievedMessageStatus
-) => TE.TaskEither<string, RetrievedMessageStatus>) => (
+) => TE.TaskEither<NotComputedDocument, RetrievedMessageStatus>) => (
   document: RetrievedMessageStatus
-): TE.TaskEither<string, RetrievedMessageStatus> =>
+): TE.TaskEither<NotComputedDocument, RetrievedMessageStatus> =>
   pipe(
     document,
     TE.fromPredicate(
@@ -81,7 +87,8 @@ export const isEligibleForTTL = (
         hasNotTTL,
         () => `the document ${document.id} has a ttl already`
       )
-    )
+    ),
+    TE.mapLeft(reason => ({ document, reason }))
   );
 
 /**
@@ -140,7 +147,9 @@ export const handleSetTTL = (
   profileModel: ProfileModel,
   telemetryClient: TelemetryClient,
   documents: ReadonlyArray<unknown>
-): T.Task<ReadonlyArray<E.Either<string, RetrievedMessageStatus>>> =>
+): T.Task<ReadonlyArray<
+  E.Either<NotComputedDocument, RetrievedMessageStatus>
+>> =>
   pipe(
     documents,
     RA.map((doc: unknown) =>
@@ -154,7 +163,9 @@ export const handleSetTTL = (
             name: `trigger.messages.cqrs.item-not-RetrievedMessageStatus`,
             tagOverrides: { samplingEnabled: "false" }
           });
-          return "This item is not a RetrievedMessageStatus";
+          return {
+            reason: "This item is not a RetrievedMessageStatus"
+          };
         }),
         TE.chainW(isEligibleForTTL(telemetryClient)),
         TE.chainW(
@@ -210,37 +221,50 @@ export const handleSetTTL = (
                         )
                       )
                     )
-                  )
+                  ),
+                  TE.mapLeft(reason => ({
+                    document: retrievedDocument,
+                    reason
+                  }))
                 ),
-              flow(
-                // the rejection reason is defined, we need to check if it is USER_NOT_FOUND, otherwise we do not set the ttl
-                TE.fromPredicate(
-                  retrievedDocument =>
-                    RejectedMessageStatusValueEnum.REJECTED ===
-                      retrievedDocument.status &&
-                    RejectionReasonEnum.USER_NOT_FOUND ===
-                      retrievedDocument.rejection_reason,
-                  () => "The reason of the rejection is not USER_NOT_FOUND"
-                ),
-                // eslint-disable-next-line
-                TE.chainW(retrievedDocument =>
-                  setTTLForMessageAndStatus(
-                    retrievedDocument,
-                    messageStatusModel,
-                    messageModel
-                  )
+              retrievedDocument =>
+                pipe(
+                  retrievedDocument,
+                  // the rejection reason is defined, we need to check if it is USER_NOT_FOUND, otherwise we do not set the ttl
+                  TE.fromPredicate(
+                    rD =>
+                      RejectedMessageStatusValueEnum.REJECTED === rD.status &&
+                      RejectionReasonEnum.USER_NOT_FOUND ===
+                        rD.rejection_reason,
+                    () => "The reason of the rejection is not USER_NOT_FOUND"
+                  ),
+                  // eslint-disable-next-line
+                  TE.chainW(retrievedDocument =>
+                    setTTLForMessageAndStatus(
+                      retrievedDocument,
+                      messageStatusModel,
+                      messageModel
+                    )
+                  ),
+                  TE.mapLeft(reason => ({
+                    document: retrievedDocument,
+                    reason
+                  }))
                 )
-              )
             ),
             T.map(
               E.bimap(
                 reason => {
-                  telemetryClient.trackEvent({
-                    name: `trigger.messages.cqrs.update-not-performed`,
-                    properties: {
-                      reason
-                    }
-                  });
+                  if (reason.document) {
+                    telemetryClient.trackEvent({
+                      name: `trigger.messages.cqrs.update-not-performed`,
+                      properties: {
+                        id: reason.document.id,
+                        reason: reason.reason,
+                        status: reason.document.status
+                      }
+                    });
+                  }
 
                   return reason;
                 },
