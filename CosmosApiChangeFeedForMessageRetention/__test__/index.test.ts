@@ -143,8 +143,6 @@ describe("handleSetTTL", () => {
       mockDocuments
     )();
 
-    console.log(r);
-
     expect(RA.rights(r)).toHaveLength(4);
     expect(mockProfileFindLast).toHaveBeenCalledTimes(4);
     expect(mockUpdateTTLForAllVersions).toHaveBeenCalledTimes(4);
