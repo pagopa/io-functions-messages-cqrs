@@ -1,3 +1,4 @@
+import { inspect } from "util";
 import * as TE from "fp-ts/lib/TaskEither";
 import * as T from "fp-ts/lib/Task";
 import * as E from "fp-ts/lib/Either";
@@ -20,6 +21,12 @@ import { FiscalCode } from "@pagopa/io-functions-commons/dist/generated/definiti
 import { Ttl } from "@pagopa/io-functions-commons/dist/src/utils/cosmosdb_model_ttl";
 import { RejectionReasonEnum } from "@pagopa/io-functions-commons/dist/generated/definitions/RejectionReason";
 import { TelemetryClient } from "../utils/appinsights";
+
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type NotComputedDocument = {
+  readonly document?: RetrievedMessageStatus;
+  readonly reason: string;
+};
 
 /**
   the timestamp related to 2022-11-23   20:00:00
@@ -52,9 +59,9 @@ export const isEligibleForTTL = (
   telemetryClient: TelemetryClient
 ): ((
   document: RetrievedMessageStatus
-) => TE.TaskEither<string, RetrievedMessageStatus>) => (
+) => TE.TaskEither<NotComputedDocument, RetrievedMessageStatus>) => (
   document: RetrievedMessageStatus
-): TE.TaskEither<string, RetrievedMessageStatus> =>
+): TE.TaskEither<NotComputedDocument, RetrievedMessageStatus> =>
   pipe(
     document,
     TE.fromPredicate(
@@ -80,7 +87,8 @@ export const isEligibleForTTL = (
         hasNotTTL,
         () => `the document ${document.id} has a ttl already`
       )
-    )
+    ),
+    TE.mapLeft(reason => ({ document, reason }))
   );
 
 /**
@@ -101,9 +109,9 @@ export const setTTLForMessageAndStatus = (
     ),
     TE.mapLeft(err => {
       throw new Error(
-        `Something went wrong trying to update the message ttl | ${JSON.stringify(
-          err
-        )}`
+        `Something went wrong trying to update the message ttl for message with id: ${
+          document.id
+        } | ${JSON.stringify(inspect(err))}`
       );
     }),
     TE.chain(() =>
@@ -114,9 +122,9 @@ export const setTTLForMessageAndStatus = (
     ),
     TE.mapLeft(err => {
       throw new Error(
-        `Something went wrong trying to update the message-status ttl | ${JSON.stringify(
-          err
-        )}`
+        `Something went wrong trying to update the message-status ttl for message with id: ${
+          document.id
+        } | ${JSON.stringify(inspect(err))}`
       );
     }),
     TE.map(() => document)
@@ -139,7 +147,9 @@ export const handleSetTTL = (
   profileModel: ProfileModel,
   telemetryClient: TelemetryClient,
   documents: ReadonlyArray<unknown>
-): T.Task<ReadonlyArray<E.Either<string, RetrievedMessageStatus>>> =>
+): T.Task<ReadonlyArray<
+  E.Either<NotComputedDocument, RetrievedMessageStatus>
+>> =>
   pipe(
     documents,
     RA.map((doc: unknown) =>
@@ -153,7 +163,9 @@ export const handleSetTTL = (
             name: `trigger.messages.cqrs.item-not-RetrievedMessageStatus`,
             tagOverrides: { samplingEnabled: "false" }
           });
-          return "This item is not a RetrievedMessageStatus";
+          return {
+            reason: "This item is not a RetrievedMessageStatus"
+          };
         }),
         TE.chainW(isEligibleForTTL(telemetryClient)),
         TE.chainW(
@@ -173,9 +185,9 @@ export const handleSetTTL = (
                     telemetryClient.trackEvent({
                       name: `trigger.messages.cqrs.invalid-FiscalCode`,
                       properties: {
+                        fiscalCode: retrievedDocument.fiscalCode ?? "",
                         id: retrievedDocument.id,
-                        messageId: retrievedDocument.messageId,
-                        fiscalCode: retrievedDocument.fiscalCode ?? ""
+                        messageId: retrievedDocument.messageId
                       },
                       tagOverrides: { samplingEnabled: "false" }
                     });
@@ -187,9 +199,9 @@ export const handleSetTTL = (
                       profileModel.findLastVersionByModelId([fiscalCode]),
                       TE.mapLeft(err => {
                         throw new Error(
-                          `Something went wrong trying to find the profile | ${JSON.stringify(
-                            err
-                          )}`
+                          `Something went wrong trying to find the profile for message with id: ${
+                            retrievedDocument.id
+                          } | ${JSON.stringify(inspect(err))}`
                         );
                       })
                     )
@@ -209,38 +221,65 @@ export const handleSetTTL = (
                         )
                       )
                     )
-                  )
+                  ),
+                  TE.mapLeft(reason => ({
+                    document: retrievedDocument,
+                    reason
+                  }))
                 ),
-              flow(
-                // the rejection reason is defined, we need to check if it is USER_NOT_FOUND, otherwise we do not set the ttl
-                TE.fromPredicate(
-                  retrievedDocument =>
-                    RejectedMessageStatusValueEnum.REJECTED ===
-                      retrievedDocument.status &&
-                    RejectionReasonEnum.USER_NOT_FOUND ===
-                      retrievedDocument.rejection_reason,
-                  () => "The reason of the rejection is not USER_NOT_FOUND"
-                ),
-                // eslint-disable-next-line
-                TE.chainW(retrievedDocument =>
-                  setTTLForMessageAndStatus(
-                    retrievedDocument,
-                    messageStatusModel,
-                    messageModel
-                  )
-                ),
-                TE.chainFirst(({ status, id }) =>
-                  TE.of(
-                    telemetryClient.trackEvent({
-                      name: `trigger.messages.cqrs.update-done`,
-                      properties: {
-                        id,
-                        status
-                      },
-                      tagOverrides: { samplingEnabled: "false" }
-                    })
-                  )
+              retrievedDocument =>
+                pipe(
+                  retrievedDocument,
+                  // the rejection reason is defined, we need to check if it is USER_NOT_FOUND, otherwise we do not set the ttl
+                  TE.fromPredicate(
+                    rD =>
+                      RejectedMessageStatusValueEnum.REJECTED === rD.status &&
+                      RejectionReasonEnum.USER_NOT_FOUND ===
+                        rD.rejection_reason,
+                    () => "The reason of the rejection is not USER_NOT_FOUND"
+                  ),
+                  // eslint-disable-next-line
+                  TE.chainW(retrievedDocument =>
+                    setTTLForMessageAndStatus(
+                      retrievedDocument,
+                      messageStatusModel,
+                      messageModel
+                    )
+                  ),
+                  TE.mapLeft(reason => ({
+                    document: retrievedDocument,
+                    reason
+                  }))
                 )
+            ),
+            T.map(
+              E.bimap(
+                reason => {
+                  if (reason.document) {
+                    telemetryClient.trackEvent({
+                      name: `trigger.messages.cqrs.update-not-performed`,
+                      properties: {
+                        id: reason.document.id,
+                        reason: reason.reason,
+                        status: reason.document.status
+                      }
+                    });
+                  }
+
+                  return reason;
+                },
+                document => {
+                  telemetryClient.trackEvent({
+                    name: `trigger.messages.cqrs.update-done`,
+                    properties: {
+                      id: document.id,
+                      status: document.status
+                    },
+                    tagOverrides: { samplingEnabled: "false" }
+                  });
+
+                  return document;
+                }
               )
             )
           )

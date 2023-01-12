@@ -35,48 +35,66 @@ const mockDocuments = [
   aMessageStatus
 ];
 
+const mockTrackEvent = jest.fn(_ => void 0);
 const mockTelemetryClient = ({
-  trackEvent: jest.fn(_ => void 0)
+  trackEvent: mockTrackEvent
 } as unknown) as TelemetryClient;
 
 describe("isEligibleForTTL", () => {
-  it("should return a string if the status is not REJECTED", async () => {
+  it("should return left with reason if the status is not REJECTED", async () => {
     const r = await isEligibleForTTL(mockTelemetryClient)(aMessageStatus)();
     expect(E.isLeft(r)).toBeTruthy();
     if (E.isLeft(r)) {
-      expect(r.left).toBe("This message status is not rejected");
+      expect(r.left).toMatchObject(
+        expect.objectContaining({
+          document: aMessageStatus,
+          reason: "This message status is not rejected"
+        })
+      );
     }
     expect(mockTelemetryClient.trackEvent).not.toHaveBeenCalled();
   });
 
-  it("should return a string if the _ts is after the RELEASE_TIMESTAMP", async () => {
-    const r = await isEligibleForTTL(mockTelemetryClient)({
+  it("should return left with reason if the _ts is after the RELEASE_TIMESTAMP", async () => {
+    const aMessageStatusAfterReleaseDate = {
       ...aMessageStatus,
       _ts: 2670524345,
       status: RejectedMessageStatusValueEnum.REJECTED
-    })();
+    };
+    const r = await isEligibleForTTL(mockTelemetryClient)(
+      aMessageStatusAfterReleaseDate
+    )();
     expect(E.isLeft(r)).toBeTruthy();
     expect(mockTelemetryClient.trackEvent).toHaveBeenCalledTimes(1);
     if (E.isLeft(r)) {
-      expect(r.left).toBe(
-        `the timestamp of the document ${
-          aMessageStatus.id
-        } (${2670524345}) is after the RELEASE_TIMESTAMP ${RELEASE_TIMESTAMP}`
+      expect(r.left).toMatchObject(
+        expect.objectContaining({
+          document: aMessageStatusAfterReleaseDate,
+          reason: `the timestamp of the document ${
+            aMessageStatus.id
+          } (${2670524345}) is after the RELEASE_TIMESTAMP ${RELEASE_TIMESTAMP}`
+        })
       );
     }
   });
 
-  it("should return a string if the document already has a ttl", async () => {
-    const r = await isEligibleForTTL(mockTelemetryClient)({
+  it("should return left with reason if the document already has a ttl", async () => {
+    const messageStatusWithTTL = {
       ...aMessageStatus,
       status: RejectedMessageStatusValueEnum.REJECTED,
       ttl
-    })();
+    };
+    const r = await isEligibleForTTL(mockTelemetryClient)(
+      messageStatusWithTTL
+    )();
     expect(E.isLeft(r)).toBeTruthy();
     expect(mockTelemetryClient.trackEvent).not.toHaveBeenCalled();
     if (E.isLeft(r)) {
-      expect(r.left).toBe(
-        `the document ${aMessageStatus.id} has a ttl already`
+      expect(r.left).toMatchObject(
+        expect.objectContaining({
+          document: messageStatusWithTTL,
+          reason: `the document ${aMessageStatus.id} has a ttl already`
+        })
       );
     }
   });
@@ -110,11 +128,29 @@ describe("handleSetTTL", () => {
       mockTelemetryClient,
       mockDocuments
     )();
+
     expect(RA.lefts(r)).toHaveLength(6);
     expect(mockProfileFindLast).toHaveBeenCalledTimes(4);
     expect(mockUpdateTTLForAllVersions).not.toHaveBeenCalled();
     expect(mockPatch).not.toHaveBeenCalled();
-    expect(mockTelemetryClient.trackEvent).not.toHaveBeenCalled();
+    expect(mockTelemetryClient.trackEvent).toHaveBeenCalledTimes(4);
+    expect(mockTelemetryClient.trackEvent).toHaveBeenCalledWith({
+      // eslint-disable-next-line sonarjs/no-duplicate-string
+      name: "trigger.messages.cqrs.update-not-performed",
+      properties: {
+        id: anEligibleDocument.id,
+        reason: "This profile exist",
+        status: anEligibleDocument.status
+      }
+    });
+    expect(mockTelemetryClient.trackEvent).toHaveBeenLastCalledWith({
+      name: "trigger.messages.cqrs.update-not-performed",
+      properties: {
+        id: anEligibleDocument.id,
+        reason: "This profile exist",
+        status: anEligibleDocument.status
+      }
+    });
   });
 
   it("should set the ttl for 4 documents for not registered users", async () => {
@@ -132,11 +168,22 @@ describe("handleSetTTL", () => {
       mockTelemetryClient,
       mockDocuments
     )();
+
     expect(RA.rights(r)).toHaveLength(4);
     expect(mockProfileFindLast).toHaveBeenCalledTimes(4);
     expect(mockUpdateTTLForAllVersions).toHaveBeenCalledTimes(4);
     expect(mockPatch).toHaveBeenCalledTimes(4);
-    expect(mockTelemetryClient.trackEvent).not.toHaveBeenCalled();
+    expect(mockTrackEvent).toHaveBeenCalledTimes(4);
+
+    expect(mockTrackEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: `trigger.messages.cqrs.update-done`,
+        properties: {
+          id: anEligibleDocument.id,
+          status: anEligibleDocument.status
+        }
+      })
+    );
   });
 
   it("Should call the setTTLForMessageAndStatus without calling the profileModel.findLastVersionByModelId", async () => {
@@ -155,13 +202,23 @@ describe("handleSetTTL", () => {
         }
       ]
     )();
+
     expect(E.isRight(r[0])).toBeTruthy();
     expect(mockProfileFindLast).not.toHaveBeenCalled();
     expect(mockPatch).toHaveBeenCalledTimes(1);
     expect(mockUpdateTTLForAllVersions).toHaveBeenCalledTimes(1);
+    expect(mockTrackEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: `trigger.messages.cqrs.update-done`,
+        properties: {
+          id: anEligibleDocument.id,
+          status: anEligibleDocument.status
+        }
+      })
+    );
   });
 
-  it("Should not call the setTTLForMessageAndStatus and the profileModel.findLastVersionByModelId", async () => {
+  it("Should not call the setTTLForMessageAndStatus and the profileModel.findLastVersionByModelId if rejection reason is SERVICE_NOT_ALLOWED", async () => {
     /*
      * we are passing a document with rejection_reason setted to SERVICE_NOT_ALLOWED,
      * mockProfileFindLast, mockPatch and mockUpdateTTLForAllVersions should never be called then cause we don't want to set the ttl
@@ -184,6 +241,16 @@ describe("handleSetTTL", () => {
     expect(mockProfileFindLast).not.toHaveBeenCalled();
     expect(mockPatch).not.toHaveBeenCalled();
     expect(mockUpdateTTLForAllVersions).not.toHaveBeenCalled();
+    expect(mockTrackEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "trigger.messages.cqrs.update-not-performed",
+        properties: {
+          id: anEligibleDocument.id,
+          reason: "The reason of the rejection is not USER_NOT_FOUND",
+          status: anEligibleDocument.status
+        }
+      })
+    );
   });
 
   it("Should return a cosmos error in case of patch fails", async () => {
@@ -198,9 +265,7 @@ describe("handleSetTTL", () => {
       mockDocuments
     )();
 
-    await expect(r).rejects.toThrowError(
-      'Something went wrong trying to update the message ttl | {"kind":"COSMOS_EMPTY_RESPONSE"}'
-    );
+    await expect(r).rejects.toThrowError();
   });
 
   it("Should return a cosmos error in case of mockUpdateTTLForAllVersions fails", async () => {
@@ -217,9 +282,7 @@ describe("handleSetTTL", () => {
       mockDocuments
     )();
 
-    await expect(r).rejects.toThrowError(
-      `Something went wrong trying to update the message-status ttl | {"kind":"COSMOS_EMPTY_RESPONSE"}`
-    );
+    await expect(r).rejects.toThrowError();
   });
 
   it("Should throw an error in case of the retrieve of the profile fails", async () => {
@@ -234,8 +297,6 @@ describe("handleSetTTL", () => {
       mockDocuments
     )();
 
-    await expect(r).rejects.toThrowError(
-      `Something went wrong trying to find the profile | {"kind":"COSMOS_EMPTY_RESPONSE"}`
-    );
+    await expect(r).rejects.toThrowError();
   });
 });
