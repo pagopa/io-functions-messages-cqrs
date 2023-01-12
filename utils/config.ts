@@ -58,13 +58,15 @@ export const IConfig = t.intersection([
   MessageChangeFeedConfig
 ]);
 
+// Default start from beginning
+const DEFAULT_MESSAGE_CHANGE_FEED_START_TIME = "2010-01-01T01:00:00Z";
 export const envConfig = {
   ...process.env,
   MESSAGE_CHANGE_FEED_START_TIME: pipe(
     process.env.MESSAGE_CHANGE_FEED_START_TIME,
     IsoDateFromString.decode,
     E.map(dateFromString => dateFromString.toISOString()),
-    E.getOrElse(() => "")
+    E.getOrElse(() => DEFAULT_MESSAGE_CHANGE_FEED_START_TIME)
   ),
   isProduction: process.env.NODE_ENV === "production"
 };
