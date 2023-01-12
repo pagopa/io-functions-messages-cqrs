@@ -173,9 +173,9 @@ export const handleSetTTL = (
                     telemetryClient.trackEvent({
                       name: `trigger.messages.cqrs.invalid-FiscalCode`,
                       properties: {
+                        fiscalCode: retrievedDocument.fiscalCode ?? "",
                         id: retrievedDocument.id,
-                        messageId: retrievedDocument.messageId,
-                        fiscalCode: retrievedDocument.fiscalCode ?? ""
+                        messageId: retrievedDocument.messageId
                       },
                       tagOverrides: { samplingEnabled: "false" }
                     });
