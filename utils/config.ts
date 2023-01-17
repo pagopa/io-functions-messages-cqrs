@@ -15,16 +15,10 @@ import { NonEmptyString } from "@pagopa/ts-commons/lib/strings";
 
 import { AzureEventhubSasFromString } from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaProducerCompact";
 import { IsoDateFromString } from "@pagopa/ts-commons/lib/dates";
-import { withDefault } from "@pagopa/ts-commons/lib/types";
 
-// Default start from beginning
-export const DEFAULT_MESSAGE_CHANGE_FEED_START_TIME = "2010-01-01T01:00:00Z";
 export const MessageChangeFeedConfig = t.type({
   MESSAGE_CHANGE_FEED_LEASE_PREFIX: NonEmptyString,
-  MESSAGE_CHANGE_FEED_START_TIME: withDefault(
-    NonEmptyString,
-    DEFAULT_MESSAGE_CHANGE_FEED_START_TIME as NonEmptyString
-  )
+  MESSAGE_CHANGE_FEED_START_TIME: NonEmptyString
 });
 export type MessageChangeFeedConfig = t.TypeOf<typeof MessageChangeFeedConfig>;
 // global app configuration
