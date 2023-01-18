@@ -1,0 +1,17 @@
+name: "Lint PR title"
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+
+jobs:
+  main:
+    name: Validate PR title
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: Slashgear/action-check-pr-title@v4.3.0
+        with:
+          regexp: "^\\[(#[A-Z]*-[0-9]* ?){1,}\\]" # Regex the title should match.
