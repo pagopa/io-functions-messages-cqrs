@@ -13,7 +13,7 @@ jobs:
     name: Validate PR title And link Jira Issue
     runs-on: ubuntu-22.04
     env:
-      - JIRA_COMMENT_REGEX="^.*refers to.*Jira.*"
+      JIRA_COMMENT_REGEX: "^.*refers to.*Jira.*"
     steps:
       - uses: Slashgear/action-check-pr-title@v4.3.0
         id: lint
