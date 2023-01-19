@@ -34,10 +34,16 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-- bash: |
-    echo "FUNCTION_NAME: ${ENV_FUNCTION_NAME}"
-    az functionapp config appsettings set --name io-p-messages-cqrs-fn --resource-group io-p-backend-messages-rg --settings "AzureWebJobs.${ENV_FUNCTION_NAME}.Disabled=1"
+- task: AzureCLI@2
+  displayName: 'disable given function name'
+  inputs:
+    azureSubscription: '$(PRODUCTION_AZURE_SUBSCRIPTION)'
+    addSpnToEnvironment: true
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    failOnStandardError: true
+    inlineScript: |
+      echo "FUNCTION_NAME: ${ENV_FUNCTION_NAME}"
+      az functionapp config appsettings set --name io-p-messages-cqrs-fn --resource-group io-p-backend-messages-rg --settings "AzureWebJobs.${ENV_FUNCTION_NAME}.Disabled=1"
   env:
     ENV_FUNCTION_NAME: '${{ parameters.FUNCTION_NAME }}'
-
-  displayName: 'disable given function name'
