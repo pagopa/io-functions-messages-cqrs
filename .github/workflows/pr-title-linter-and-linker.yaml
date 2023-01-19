@@ -25,11 +25,8 @@ jobs:
         run: |
           PR_TITLE=$(echo "${{ github.event.pull_request.title }}")
           ISSUES_STR=$(awk -F'\\[|\\]' '{print $2}' <<< "$PR_TITLE" | sed "s/#//g")
-          echo "ISSUES_STR=$ISSUES_STR"
           JIRA_ISSUE=$(echo ${ISSUES_STR##* })
-          echo "JIRA_ISSUE=$JIRA_ISSUE"
-          JIRA_COMMENT_REGEX=$(echo "^.*$JIRA_ISSUE.*")
-          echo "JIRA_COMMENT_REGEX=$JIRA_COMMENT_REGEX"
+          JIRA_COMMENT_REGEX=$(echo "^.*Link to Jira:.*")
           echo "JIRA_ISSUE=$JIRA_ISSUE" >> $GITHUB_ENV
           echo "JIRA_COMMENT_REGEX=$JIRA_COMMENT_REGEX" >> $GITHUB_ENV
       - name: Find Jira Comment
@@ -37,12 +34,13 @@ jobs:
         id: fc
         with:
           issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
           body-regex: "${{ env.JIRA_COMMENT_REGEX }}"
       - name: Create Jira Link comment
-        if: steps.fc.outputs.comment-id == ''
         uses: peter-evans/create-or-update-comment@v2
         with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            Link to Jira: [${{ env.JIRA_ISSUE }}](https://pagopa.atlassian.net/browse/${{ env.JIRA_ISSUE }})
-          reactions: rocket    
+            This PR refers to a Jira issue. Link to Jira: [${{ env.JIRA_ISSUE }}](https://pagopa.atlassian.net/browse/${{ env.JIRA_ISSUE }})
+          edit-mode: replace
