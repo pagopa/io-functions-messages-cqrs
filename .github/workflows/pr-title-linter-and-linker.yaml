@@ -61,7 +61,7 @@ jobs:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            ## Jira Pull request Link ##
+            ## Jira Pull Request Link ##
             ${{ env.JIRA_COMMENT_MARKDOWN }}
           edit-mode: replace
       - name: Create Empty Jira Link comment
