@@ -70,3 +70,6 @@ jobs:
             It seems that this Pull Request has no Jira related Issues!!!
             Please check it out.
           edit-mode: replace
+      - name: Failure
+        if: steps.lint.outputs.exit_code == 0
+        run: exit 1
