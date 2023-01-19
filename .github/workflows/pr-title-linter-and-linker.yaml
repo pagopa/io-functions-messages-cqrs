@@ -57,5 +57,5 @@ jobs:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            ${{ env.JIRA_COMMENT_MARKDOWN }})
+            ${{ env.JIRA_COMMENT_MARKDOWN }}
           edit-mode: replace
