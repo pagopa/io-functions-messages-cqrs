@@ -58,3 +58,4 @@ generated
 .eslintcache
 
 azure-functions-core-tools
+!.identity/env/
