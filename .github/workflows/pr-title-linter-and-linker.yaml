@@ -51,12 +51,8 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
           body-regex: "${{ env.JIRA_COMMENT_REGEX }}"
-      - name: Echo
-        run: | 
-          echo ${{ steps.lint.outputs.exit_code }}
-          echo ${{ steps.lint.outcome }}
       - name: Create Jira Link comment
-        if: steps.lint.outputs.exit_code != 0
+        if: steps.lint.outcome == 'success'
         uses: peter-evans/create-or-update-comment@v2
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}
@@ -65,7 +61,7 @@ jobs:
             ${{ env.JIRA_COMMENT_MARKDOWN }}
           edit-mode: replace
       - name: Create Empty Jira Link comment
-        if: steps.lint.outputs.exit_code == 0
+        if: steps.lint.outcome != 'success'
         uses: peter-evans/create-or-update-comment@v2
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}
@@ -75,7 +71,7 @@ jobs:
             Please check it out.
           edit-mode: replace
       - name: Failure
-        if: steps.lint.outputs.exit_code == 0
+        if: steps.lint.outcome != 'success'
         run: |
           echo "${{ github.event.pull_request.title }} is not properly formatted or it is not related to any JIRA issue"
           exit 1
