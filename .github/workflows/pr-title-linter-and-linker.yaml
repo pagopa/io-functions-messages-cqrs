@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: Slashgear/action-check-pr-title@v4.3.0
         with:
-          regexp: "^\\[(#[A-Z]*-[0-9]* ?){1,}\\]" # Regex the title should match.
+          regexp: "\\[(#?[A-Z]*-[0-9]*( |, )?){1,}\\]" # Regex the title should match.
   link:
     needs: lint
     name: Link Jira Issue
@@ -23,7 +23,7 @@ jobs:
         id: extract_jira_issue
         run: |
           PR_TITLE=$(echo "${{ github.event.pull_request.title }}")
-          ISSUES_STR=$(awk -F'\\[|\\]' '{print $2}' <<< "$PR_TITLE" | sed "s/#//g")
+          ISSUES_STR=$(awk -F'\\[|\\]' '{print $2}' <<< "$PR_TITLE" | sed "s/#//g" | sed "s/,//g")
           ISSUES=($ISSUES_STR)
           JIRA_ISSUE=$(echo ${ISSUES_STR##* })
           JIRA_COMMENT_REGEX=$(echo "^.*refers to.*Jira.*")
