@@ -1,0 +1,46 @@
+name: "Lint and Link PR title"
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+
+jobs:
+  lint:
+    name: Validate PR title
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: Slashgear/action-check-pr-title@v4.3.0
+        with:
+          regexp: "^\\[(#[A-Z]*-[0-9]* ?){1,}\\]" # Regex the title should match.
+  link:
+    needs: lint
+    name: Link Jira Issue
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Extract Jira Issue to Link
+        id: extract_jira_issue
+        run: |
+          PR_TITLE=${{ github.event.pull_request.title }}
+          ISSUES_STR=$(awk -F'\\[|\\]' '{print $2}' <<< "$PR_TITLE" | sed "s/#//g")
+          ISSUES=($(echo $ISSUES_STR | tr " " "\n"))
+          JIRA_ISSUE=$(echo $ISSUES[-1])
+          JIRA_COMMENT_REGEX=$(echo "^.*$JIRA_ISSUE.*")
+          echo $JIRA_ISSUE >> $GITHUB_ENV
+          echo $JIRA_COMMENT_REGEX >> $GITHUB_ENV
+      - name: Find Jira Comment
+        uses: peter-evans/find-comment@v2
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-regex: "${{ env.JIRA_COMMENT_REGEX }}"
+      - name: Create Jira Link comment
+        if: steps.fc.outputs.comment-id == ''
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            Link to Jira: [${{ env.JIRA_ISSUE }}](https://pagopa.atlassian.net/browse/${{ env.JIRA_ISSUE }})
+          reactions: rocket    
