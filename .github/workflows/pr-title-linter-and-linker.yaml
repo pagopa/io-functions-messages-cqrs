@@ -72,4 +72,6 @@ jobs:
           edit-mode: replace
       - name: Failure
         if: steps.lint.outputs.exit_code == 0
-        run: exit 1
+        run: |
+          echo "${{ github.event.pull_request.title }} is not properly formatted or it is not related to any JIRA issue"
+          exit 1
