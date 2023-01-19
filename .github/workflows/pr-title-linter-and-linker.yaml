@@ -10,25 +10,23 @@ on:
 
 jobs:
   lint:
-    name: Validate PR title
+    name: Validate PR title And link Jira Issue
     runs-on: ubuntu-22.04
+    env:
+      - JIRA_COMMENT_REGEX="^.*refers to.*Jira.*"
     steps:
       - uses: Slashgear/action-check-pr-title@v4.3.0
+        id: lint
         with:
           regexp: "\\[(#?[A-Z]*-[0-9]*( |, )?){1,}\\]" # Regex the title should match.
-  link:
-    needs: lint
-    name: Link Jira Issue
-    runs-on: ubuntu-22.04
-    steps:
       - name: Extract Jira Issue to Link
         id: extract_jira_issue
+        if: steps.lint.outputs.exit_code == 0
         run: |
           PR_TITLE=$(echo "${{ github.event.pull_request.title }}")
           ISSUES_STR=$(awk -F'\\[|\\]' '{print $2}' <<< "$PR_TITLE" | sed "s/#//g" | sed "s/,//g")
           ISSUES=($ISSUES_STR)
           JIRA_ISSUE=$(echo ${ISSUES_STR##* })
-          JIRA_COMMENT_REGEX=$(echo "^.*refers to.*Jira.*")
           MARKDOWN_CARRIAGE_RETURN="<br>"
           MARKDOWN_PREFIX="- Link to"
           JIRA_COMMENT_MARKDOWN="This Pull Request refers to Jira issues:<br>"
@@ -44,7 +42,6 @@ jobs:
           done
 
           echo "JIRA_ISSUE=$JIRA_ISSUE" >> $GITHUB_ENV
-          echo "JIRA_COMMENT_REGEX=$JIRA_COMMENT_REGEX" >> $GITHUB_ENV
           echo "JIRA_COMMENT_MARKDOWN=$JIRA_COMMENT_MARKDOWN" >> $GITHUB_ENV
       - name: Find Jira Comment
         uses: peter-evans/find-comment@v2
@@ -54,10 +51,21 @@ jobs:
           comment-author: 'github-actions[bot]'
           body-regex: "${{ env.JIRA_COMMENT_REGEX }}"
       - name: Create Jira Link comment
+        if: steps.lint.outputs.exit_code == 0
         uses: peter-evans/create-or-update-comment@v2
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             ${{ env.JIRA_COMMENT_MARKDOWN }}
+          edit-mode: replace
+      - name: Create Empty Jira Link comment
+        if: steps.lint.outputs.exit_code != 0
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            It seems that this Pull Request has no Jira related Issues!!!
+            Please check it out.
           edit-mode: replace
