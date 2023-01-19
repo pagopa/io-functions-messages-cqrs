@@ -34,7 +34,6 @@ jobs:
           then
             JIRA_COMMENT_MARKDOWN="This Pull Request refers to the following Jira issue"
             MARKDOWN_PREFIX=""
-            MARKDOWN_CARRIAGE_RETURN=""
           fi
 
           for ISSUE in "${ISSUES[@]}"
