@@ -23,7 +23,7 @@ jobs:
       - name: Extract Jira Issue to Link
         id: extract_jira_issue
         run: |
-          PR_TITLE=echo "${{ github.event.pull_request.title }}"
+          PR_TITLE=$(echo "${{ github.event.pull_request.title }}")
           ISSUES_STR=$(awk -F'\\[|\\]' '{print $2}' <<< "$PR_TITLE" | sed "s/#//g")
           echo "ISSUES_STR=$ISSUES_STR"
           ISSUES=($(echo $ISSUES_STR | tr " " "\n"))
