@@ -30,4 +30,4 @@ jobs:
           subscription-id: "ec285037-c673-4f58-b594-d7c480da4e8b"
       - name: Az Cli Runner
         run: |
-          az functionapp config appsettings set --name io-p-messages-cqrs-fn --resource-group io-p-backend-messages-rg --settings "AzureWebJobs.CosmosApiMessagesChangeFeed.Disabled=1"
+          az functionapp config appsettings set --name io-p-messages-cqrs-fn --resource-group io-p-backend-messages-rg --settings "AzureWebJobs.CosmosApiMessagesChangeFeed.Disabled=1" --query "nooutput" 
