@@ -26,9 +26,7 @@ jobs:
           PR_TITLE=$(echo "${{ github.event.pull_request.title }}")
           ISSUES_STR=$(awk -F'\\[|\\]' '{print $2}' <<< "$PR_TITLE" | sed "s/#//g")
           echo "ISSUES_STR=$ISSUES_STR"
-          ISSUES=($(echo $ISSUES_STR | tr " " "\n"))
-          echo "ISSUES=$ISSUES"
-          JIRA_ISSUE=$(echo "$ISSUES[-1]")
+          JIRA_ISSUE=$(echo ${ISSUES_STR##* })
           echo "JIRA_ISSUE=$JIRA_ISSUE"
           JIRA_COMMENT_REGEX=$(echo "^.*$JIRA_ISSUE.*")
           echo "JIRA_COMMENT_REGEX=$JIRA_COMMENT_REGEX"
