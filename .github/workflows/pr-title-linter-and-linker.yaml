@@ -52,7 +52,7 @@ jobs:
           comment-author: 'github-actions[bot]'
           body-regex: "${{ env.JIRA_COMMENT_REGEX }}"
       - name: Echo
-        run: echo ${{ steps.lint.outputs }} | jq
+        run: echo "${{ steps.lint.outputs }}" | jq -R
       - name: Create Jira Link comment
         if: steps.lint.outputs.exit_code != 0
         uses: peter-evans/create-or-update-comment@v2
