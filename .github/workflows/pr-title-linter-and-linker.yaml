@@ -30,8 +30,8 @@ jobs:
           echo "JIRA_ISSUE=$JIRA_ISSUE"
           JIRA_COMMENT_REGEX=$(echo "^.*$JIRA_ISSUE.*")
           echo "JIRA_COMMENT_REGEX=$JIRA_COMMENT_REGEX"
-          echo $JIRA_ISSUE >> $GITHUB_ENV
-          echo $JIRA_COMMENT_REGEX >> $GITHUB_ENV
+          echo "JIRA_ISSUE=$JIRA_ISSUE" >> $GITHUB_ENV
+          echo "JIRA_COMMENT_REGEX=$JIRA_COMMENT_REGEX" >> $GITHUB_ENV
       - name: Find Jira Comment
         uses: peter-evans/find-comment@v2
         id: fc
