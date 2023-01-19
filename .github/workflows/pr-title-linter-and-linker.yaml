@@ -20,9 +20,17 @@ jobs:
         with:
           regexp: "\\[(#?[A-Z]*-[0-9]*( |, )?){1,}\\]" # Regex the title should match.
         continue-on-error: true
+      - name: Find Jira Comment
+        uses: peter-evans/find-comment@v2
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-regex: "${{ env.JIRA_COMMENT_REGEX }}"
+
       - name: Extract Jira Issue to Link
         id: extract_jira_issue
-        if: steps.lint.outputs.exit_code == 0
+        if: steps.lint.outcome == 'success'
         run: |
           PR_TITLE=$(echo "${{ github.event.pull_request.title }}")
           ISSUES_STR=$(awk -F'\\[|\\]' '{print $2}' <<< "$PR_TITLE" | sed "s/#//g" | sed "s/,//g")
@@ -44,13 +52,7 @@ jobs:
 
           echo "JIRA_ISSUE=$JIRA_ISSUE" >> $GITHUB_ENV
           echo "JIRA_COMMENT_MARKDOWN=$JIRA_COMMENT_MARKDOWN" >> $GITHUB_ENV
-      - name: Find Jira Comment
-        uses: peter-evans/find-comment@v2
-        id: fc
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          comment-author: 'github-actions[bot]'
-          body-regex: "${{ env.JIRA_COMMENT_REGEX }}"
+      
       - name: Create Jira Link comment
         if: steps.lint.outcome == 'success'
         uses: peter-evans/create-or-update-comment@v2
