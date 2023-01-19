@@ -20,6 +20,7 @@ jobs:
         with:
           regexp: "\\[(#?[A-Z]*-[0-9]*( |, )?){1,}\\]" # Regex the title should match.
         continue-on-error: true
+
       - name: Find Jira Comment
         uses: peter-evans/find-comment@v2
         id: fc
@@ -69,11 +70,11 @@ jobs:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            It seems that this Pull Request has no Jira related Issues!!!
+            It seems this Pull Request has no issues that refers to Jira!!!
             Please check it out.
           edit-mode: replace
-      - name: Failure
+      - name: Failure message
         if: steps.lint.outcome != 'success'
         run: |
-          echo "${{ github.event.pull_request.title }} is not properly formatted or it is not related to any JIRA issue"
+          echo "Pull request title (${{ github.event.pull_request.title }}) is not properly formatted or it is not related to any Jira issue"
           exit 1
