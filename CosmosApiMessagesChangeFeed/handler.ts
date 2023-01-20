@@ -48,8 +48,11 @@ export const handleMessageChange = (
       pipe(
         retrievedMessages,
         RA.rights,
-        RA.filter(msg => msg.createdAt.getTime() >= startTimeFilter),
-        RA.filter(msg => msg.isPending === false),
+        RA.filter(
+          msg =>
+            msg.isPending === false &&
+            msg.createdAt.getTime() >= startTimeFilter
+        ),
         enrichMessagesContent(messageModel, CHUNK_SIZE, blobService),
         T.map(enrichResults => [
           ...pipe(retrievedMessages, RA.filter(E.isLeft)),
