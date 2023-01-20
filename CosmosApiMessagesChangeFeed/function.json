@@ -11,7 +11,7 @@
       "leaseContainerName": "cqrs-leases",
       "leaseContainerPrefix": "%MESSAGE_CHANGE_FEED_LEASE_PREFIX%",
       "createLeaseContainerIfNotExists": true,
-      "startFromTime": "2022-10-01T00:00:00Z"
+      "startFromBeginning": true
     }
   ],
   "scriptFile": "../dist/CosmosApiMessagesChangeFeed/index.js"

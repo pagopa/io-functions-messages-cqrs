@@ -60,7 +60,11 @@ const run = async (
   documents: ReadonlyArray<unknown>
 ): Promise<Failure | IBulkOperationResult> => {
   logger = context.log;
-  return handleMessageChange(messageModel, messageContentBlobService)(
+  return handleMessageChange(
+    messageModel,
+    messageContentBlobService,
+    config.MESSAGE_CHANGE_FEED_START_TIME
+  )(
     kafkaClient,
     errorStorage,
     telemetryClient,

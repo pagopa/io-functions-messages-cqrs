@@ -3,6 +3,7 @@ import { aMessageStatus } from "../../__mocks__/message";
 import { handleMessageStatusChangeFeedForView as handler } from "../handler";
 import * as KP from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaProducerCompact";
 import * as TE from "fp-ts/TaskEither";
+import * as E from "fp-ts/Either";
 
 // ----------------------
 // Variables
@@ -51,10 +52,14 @@ describe("CosmosApiMessageStatusChangeFeedForView", () => {
     sendMessagesMock.mockImplementationOnce(() =>
       TE.left([{ body: aMessageStatus }])
     );
-    try {
-      await handler(mockContext, aListOfMessageStatus, kafkaClient);
-    } catch (error) {
-      expect(error.message).toEqual("Cannot publish to Kafka topic");
-    }
+    await pipe(
+      TE.tryCatch(
+        () => handler(mockContext, aListOfMessageStatus, kafkaClient),
+        E.toError
+      ),
+      TE.mapLeft(error =>
+        expect(error.message).toEqual("Cannot publish to Kafka topic")
+      )
+    )();
   });
 });
