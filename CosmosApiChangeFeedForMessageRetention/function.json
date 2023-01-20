@@ -4,12 +4,12 @@
       "type": "cosmosDBTrigger",
       "name": "messageStatusDocuments",
       "direction": "in",
-      "leaseCollectionName": "leaseMessageStatusForMessageRetention",
-      "leaseCollectionPrefix": "%LEASE_COLLECTION_PREFIX%_",
-      "connectionStringSetting": "COSMOSDB_CONNECTION_STRING",
+      "leaseContainerName": "leaseMessageStatusForMessageRetention",
+      "leaseContainerPrefix": "%LEASE_COLLECTION_PREFIX%_",
+      "connection": "COSMOSDB_CONNECTION_STRING",
       "databaseName": "%COSMOSDB_NAME%",
-      "collectionName": "message-status",
-      "createLeaseCollectionIfNotExists": true,
+      "containerName": "message-status",
+      "createLeaseContainerIfNotExists": true,
       "startFromBeginning": true
     }
   ],
