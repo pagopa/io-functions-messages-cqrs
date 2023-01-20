@@ -5,12 +5,12 @@
       "type": "cosmosDBTrigger",
       "name": "cosmosApiMessageStatusTrigger",
       "direction": "in",
-      "connectionStringSetting": "COSMOSDB_CONNECTION_STRING",
+      "connection": "COSMOSDB_CONNECTION_STRING",
       "databaseName": "%COSMOSDB_NAME%",
-      "collectionName": "message-status",
-      "leaseCollectionName": "cqrs-leases",
-      "leaseCollectionPrefix": "CosmosApiMessageStatusChangeFeedForReminder",
-      "createLeaseCollectionIfNotExists": true,
+      "containerName": "message-status",
+      "leaseContainerName": "cqrs-leases",
+      "leaseContainerPrefix": "CosmosApiMessageStatusChangeFeedForReminder",
+      "createLeaseContainerIfNotExists": true,
       "startFromBeginning": false
     }
   ],

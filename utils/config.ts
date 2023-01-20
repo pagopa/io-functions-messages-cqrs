@@ -13,9 +13,12 @@ import { readableReport } from "@pagopa/ts-commons/lib/reporters";
 import { NonEmptyString } from "@pagopa/ts-commons/lib/strings";
 
 import { AzureEventhubSasFromString } from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaProducerCompact";
+import { withDefault } from "@pagopa/ts-commons/lib/types";
+import { NumberFromString } from "@pagopa/ts-commons/lib/numbers";
 
 export const MessageChangeFeedConfig = t.type({
-  MESSAGE_CHANGE_FEED_LEASE_PREFIX: NonEmptyString
+  MESSAGE_CHANGE_FEED_LEASE_PREFIX: NonEmptyString,
+  MESSAGE_CHANGE_FEED_START_TIME: withDefault(NumberFromString, 0)
 });
 export type MessageChangeFeedConfig = t.TypeOf<typeof MessageChangeFeedConfig>;
 // global app configuration

@@ -57,6 +57,7 @@ const mockKafkaProducerKompact: KP.KafkaProducerCompact<RetrievedMessage> = () =
 
 const kafkaSendMessagesMock = jest.fn().mockImplementation(TE.of);
 jest.spyOn(KP, "sendMessages").mockImplementation(_ => kafkaSendMessagesMock);
+const defaultStartTime = 0;
 
 // ----------------------
 // Tests
@@ -65,7 +66,11 @@ jest.spyOn(KP, "sendMessages").mockImplementation(_ => kafkaSendMessagesMock);
 describe("CosmosApiMessagesChangeFeed", () => {
   beforeEach(() => jest.clearAllMocks());
   it("should send all retrieved messages", async () => {
-    const handler = handleMessageChange(mockMessageModel, {} as any);
+    const handler = handleMessageChange(
+      mockMessageModel,
+      {} as any,
+      defaultStartTime
+    );
 
     const res = await handler(
       mockKafkaProducerKompact,
@@ -87,8 +92,12 @@ describe("CosmosApiMessagesChangeFeed", () => {
     );
   });
 
-  it("should call sendMessages on Kafka producer with empty array if all messages are pending", async () => {
-    const handler = handleMessageChange(mockMessageModel, {} as any);
+  it("should not call sendMessages on Kafka producer if all messages are pending", async () => {
+    const handler = handleMessageChange(
+      mockMessageModel,
+      {} as any,
+      defaultStartTime
+    );
 
     const res = await handler(
       mockKafkaProducerKompact,
@@ -106,13 +115,17 @@ describe("CosmosApiMessagesChangeFeed", () => {
     expect(mockQueueClient.sendMessage).not.toHaveBeenCalled();
     expect(res).toMatchObject(
       expect.objectContaining({
-        results: `Documents sent (0).`
+        results: "Documents sent (0)."
       })
     );
   });
 
   it("should send only non pending messages", async () => {
-    const handler = handleMessageChange(mockMessageModel, {} as any);
+    const handler = handleMessageChange(
+      mockMessageModel,
+      {} as any,
+      defaultStartTime
+    );
 
     const res = await handler(
       mockKafkaProducerKompact,
@@ -121,6 +134,42 @@ describe("CosmosApiMessagesChangeFeed", () => {
       "cqrsName",
       [
         ...aListOfRightMessages,
+        { ...aRetrievedMessageWithoutContent, isPending: true }
+      ]
+    );
+
+    expect(mockMessageModel.getContentFromBlob).toHaveBeenCalledTimes(
+      aListOfRightMessages.length
+    );
+
+    expect(mockQueueClient.sendMessage).not.toHaveBeenCalled();
+    expect(res).toMatchObject(
+      expect.objectContaining({
+        results: `Documents sent (${aListOfRightMessages.length}).`
+      })
+    );
+  });
+
+  it("should send only non pending messages that are created after startTimeFilter", async () => {
+    const handler = handleMessageChange(
+      mockMessageModel,
+      {} as any,
+      aRetrievedMessageWithoutContent.createdAt.getTime()
+    );
+
+    const res = await handler(
+      mockKafkaProducerKompact,
+      mockQueueClient,
+      mockAppinsights,
+      "cqrsName",
+      [
+        ...aListOfRightMessages,
+        {
+          ...aRetrievedMessageWithoutContent,
+          createdAt: new Date(
+            aRetrievedMessageWithoutContent.createdAt.getTime() - 1000
+          )
+        },
         { ...aRetrievedMessageWithoutContent, isPending: true }
       ]
     );
@@ -149,7 +198,11 @@ describe("CosmosApiMessagesChangeFeed - Errors", () => {
     async ({ getContentResult }) => {
       getContentFromBlobMock.mockImplementationOnce(() => getContentResult);
 
-      const handler = handleMessageChange(mockMessageModel, {} as any);
+      const handler = handleMessageChange(
+        mockMessageModel,
+        {} as any,
+        defaultStartTime
+      );
 
       const res = await handler(
         mockKafkaProducerKompact,
@@ -174,7 +227,11 @@ describe("CosmosApiMessagesChangeFeed - Errors", () => {
   );
 
   it("should send only decoded retrieved messages", async () => {
-    const handler = handleMessageChange(mockMessageModel, {} as any);
+    const handler = handleMessageChange(
+      mockMessageModel,
+      {} as any,
+      defaultStartTime
+    );
 
     const res = await handler(
       mockKafkaProducerKompact,
