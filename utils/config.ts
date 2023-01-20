@@ -8,17 +8,14 @@
 import * as t from "io-ts";
 
 import * as E from "fp-ts/Either";
-import * as O from "fp-ts/Option";
 import { pipe } from "fp-ts/lib/function";
 import { readableReport } from "@pagopa/ts-commons/lib/reporters";
 import { NonEmptyString } from "@pagopa/ts-commons/lib/strings";
 
 import { AzureEventhubSasFromString } from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaProducerCompact";
-import { IsoDateFromString } from "@pagopa/ts-commons/lib/dates";
 
 export const MessageChangeFeedConfig = t.type({
-  MESSAGE_CHANGE_FEED_LEASE_PREFIX: NonEmptyString,
-  MESSAGE_CHANGE_FEED_START_TIME: NonEmptyString
+  MESSAGE_CHANGE_FEED_LEASE_PREFIX: NonEmptyString
 });
 export type MessageChangeFeedConfig = t.TypeOf<typeof MessageChangeFeedConfig>;
 // global app configuration
@@ -61,13 +58,6 @@ export const IConfig = t.intersection([
 
 export const envConfig = {
   ...process.env,
-  MESSAGE_CHANGE_FEED_START_TIME: pipe(
-    process.env.MESSAGE_CHANGE_FEED_START_TIME,
-    IsoDateFromString.decode,
-    O.fromEither,
-    O.map(dateFromString => dateFromString.toISOString()),
-    O.toUndefined
-  ),
   isProduction: process.env.NODE_ENV === "production"
 };
 
