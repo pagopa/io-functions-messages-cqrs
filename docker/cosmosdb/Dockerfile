@@ -1,5 +1,4 @@
-FROM node:10.14.2-alpine
-
+FROM node:18.13.0
 WORKDIR /opt/cosmosdb
 
 RUN npm install -g @zeit/cosmosdb-server ts-node
