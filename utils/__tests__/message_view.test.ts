@@ -171,6 +171,7 @@ describe("handleStatusChange", () => {
           thirdParty: {
             has: true,
             has_attachments: false,
+            has_remote_content: false,
             id: aMessageContentWithThirdParty.third_party_data?.id
           }
         },

@@ -202,6 +202,10 @@ export const handleStatusChange = (
               has: messageWithContent.content.third_party_data != null,
               has_attachments:
                 messageWithContent.content.third_party_data?.has_attachments,
+              has_precondition:
+                messageWithContent.content.third_party_data?.has_precondition,
+              has_remote_content:
+                messageWithContent.content.third_party_data?.has_remote_content,
               id: messageWithContent.content.third_party_data?.id,
               original_recipient_date:
                 messageWithContent.content.third_party_data
