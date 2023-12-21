@@ -14,7 +14,6 @@ import {
 import { MessageContentType } from "../generated/avro/dto/MessageContentTypeEnum";
 import { toPermanentFailure, toTransientFailure } from "../utils/errors";
 import { IStorableError, toStorableError } from "../utils/storable_error";
-import { TelemetryClient } from "./appinsights";
 import { IConfig } from "./config";
 /**
  * Retrieve a message content from blob storage and enrich message
@@ -87,11 +86,9 @@ export type ThirdPartyDataWithCategoryFetcher = (
 ) => IThirdPartyDataWithCategory;
 
 export const getThirdPartyDataWithCategoryFetcher: (
-  config: IConfig,
-  telemetryClient: TelemetryClient
+  config: IConfig
 ) => ThirdPartyDataWithCategoryFetcher = (
-  config,
-  telemetryClient
+  config
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 ) => serviceId =>
   pipe(
@@ -101,7 +98,6 @@ export const getThirdPartyDataWithCategoryFetcher: (
       id => Error(`Missing third-party service configuration for ${id}`)
     ),
     E.map(() => MessageContentType.PN as const),
-    E.mapLeft(e => telemetryClient.trackException({ exception: e })),
     E.mapLeft(() => MessageContentType.GENERIC as const),
     E.toUnion,
     category => ({

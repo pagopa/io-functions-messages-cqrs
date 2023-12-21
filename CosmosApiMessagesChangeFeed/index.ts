@@ -36,9 +36,7 @@ const telemetryClient = initTelemetryClient(
 
 const kafkaClient = fromSas(
   config.MESSAGES_TOPIC_CONNECTION_STRING,
-  avroMessageFormatter(
-    getThirdPartyDataWithCategoryFetcher(config, telemetryClient)
-  )
+  avroMessageFormatter(getThirdPartyDataWithCategoryFetcher(config))
 );
 
 const errorStorage = new QueueClient(
