@@ -1285,10 +1285,10 @@
     kafkajs "^1.15.0"
     typedoc "^0.20.36"
 
-"@pagopa/io-functions-commons@^28.11.0":
-  version "28.11.0"
-  resolved "https://registry.yarnpkg.com/@pagopa/io-functions-commons/-/io-functions-commons-28.11.0.tgz#5811536a0576aac0d86c69f61fe9ff4e503e1740"
-  integrity sha512-ftj0rjOIoumlpgczDjlfvxJ9v5f8C7lxUioBUScG2VMR4CRwLloWeectT/AbsqhHfMLQbnenjiTVdi5smFwQEw==
+"@pagopa/io-functions-commons@^28.20.0":
+  version "28.20.0"
+  resolved "https://registry.yarnpkg.com/@pagopa/io-functions-commons/-/io-functions-commons-28.20.0.tgz#341c47181ca98cd362c5c89382086b730bec803b"
+  integrity sha512-F3UqbJ1AkkrhrlK8os/YB9kZMY8R2K/Xfhgc6Nd2A4l23RCkJSUILgGRF7LCwGkuiLsC4DOQGPSQj8ZhahrVzg==
   dependencies:
     "@azure/cosmos" "^3.17.1"
     "@azure/data-tables" "^13.2.2"

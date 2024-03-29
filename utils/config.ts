@@ -14,7 +14,11 @@ import { NonEmptyString } from "@pagopa/ts-commons/lib/strings";
 
 import { AzureEventhubSasFromString } from "@pagopa/fp-ts-kafkajs/dist/lib/KafkaProducerCompact";
 import { withDefault } from "@pagopa/ts-commons/lib/types";
-import { NumberFromString } from "@pagopa/ts-commons/lib/numbers";
+import {
+  NonNegativeInteger,
+  NonNegativeIntegerFromString,
+  NumberFromString
+} from "@pagopa/ts-commons/lib/numbers";
 
 export const MessageChangeFeedConfig = t.type({
   MESSAGE_CHANGE_FEED_LEASE_PREFIX: NonEmptyString,
@@ -39,6 +43,7 @@ export const IConfig = t.intersection([
     INTERNAL_STORAGE_CONNECTION_STRING: NonEmptyString,
 
     MESSAGES_TOPIC_CONNECTION_STRING: AzureEventhubSasFromString,
+    MESSAGE_CONFIGURATION_CHANGE_FEED_START_TIME: NonNegativeInteger,
     MESSAGE_CONTENT_STORAGE_CONNECTION: NonEmptyString,
     MESSAGE_PAYMENT_UPDATER_FAILURE_QUEUE_NAME: NonEmptyString,
 
@@ -52,7 +57,12 @@ export const IConfig = t.intersection([
     MESSAGE_VIEW_PAYMENT_UPDATE_FAILURE_QUEUE_NAME: NonEmptyString,
     MESSAGE_VIEW_UPDATE_FAILURE_QUEUE_NAME: NonEmptyString,
     PN_SERVICE_ID: NonEmptyString,
+
     QueueStorageConnection: NonEmptyString,
+
+    REMOTE_CONTENT_COSMOSDB_KEY: NonEmptyString,
+    REMOTE_CONTENT_COSMOSDB_NAME: NonEmptyString,
+    REMOTE_CONTENT_COSMOSDB_URI: NonEmptyString,
 
     isProduction: t.boolean
   }),
@@ -61,6 +71,13 @@ export const IConfig = t.intersection([
 
 export const envConfig = {
   ...process.env,
+
+  MESSAGE_CONFIGURATION_CHANGE_FEED_START_TIME: pipe(
+    process.env.MESSAGE_CONFIGURATION_CHANGE_FEED_START_TIME,
+    NonNegativeIntegerFromString.decode,
+    E.getOrElse(() => 0 as NonNegativeInteger)
+  ),
+
   isProduction: process.env.NODE_ENV === "production"
 };
 
