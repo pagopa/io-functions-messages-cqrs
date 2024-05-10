@@ -32,6 +32,7 @@ export const aRemoteContentConfiguration: RCConfiguration = {
   hasPrecondition: HasPreconditionEnum.ALWAYS,
   disableLollipopFor: [],
   isLollipopEnabled: false,
+  id: "01HNG1XBMT8V6HWGF5T053K9RJ" as NonEmptyString,
   configurationId: "01HNG1XBMT8V6HWGF5T053K9RJ" as Ulid,
   userId: aUserId,
   name: "aRemoteContentConfiguration" as NonEmptyString,
@@ -46,6 +47,7 @@ export const anotherRemoteContentConfiguration: RCConfiguration = {
   hasPrecondition: HasPreconditionEnum.ALWAYS,
   disableLollipopFor: [],
   isLollipopEnabled: false,
+  id: "01HNG1XBMT8V6HWGF5T053K9RK" as NonEmptyString,
   configurationId: "01HNG1XBMT8V6HWGF5T053K9RK" as Ulid,
   userId: aUserId,
   name: "aRemoteContentConfiguration" as NonEmptyString,
@@ -59,8 +61,7 @@ export const anotherRemoteContentConfiguration: RCConfiguration = {
 export const aRetrievedRemoteContentConfiguration: RetrievedRCConfiguration = {
   ...aRemoteContentConfiguration,
   ...aCosmosResourceMetadata,
-  id: `${aRemoteContentConfiguration.configurationId}-00000001` as NonEmptyString,
-  version: 1 as NonNegativeInteger
+  id: `${aRemoteContentConfiguration.configurationId}` as NonEmptyString,
 };
 
 export const aPublicRemoteContentConfiguration = {
@@ -100,14 +101,13 @@ export const aRetrievedRCConfiguration: RetrievedRCConfiguration = {
   hasPrecondition: HasPreconditionEnum.ALWAYS,
   disableLollipopFor: [aFiscalCode],
   isLollipopEnabled: true,
-  id: "id" as NonEmptyString,
+  id: "01HMRBX079WA5SGYBQP1A7FSKH" as NonEmptyString,
   name: "name" as NonEmptyString,
   description: "description" as NonEmptyString,
   prodEnvironment: {
     baseUrl: "aValidUrl" as NonEmptyString,
     detailsAuthentication: aDetailAuthentication
   },
-  version: 0 as NonNegativeInteger,
   ...aCosmosResourceMetadata
 };
 
