@@ -2,14 +2,10 @@ name: Deploy Pipelines - PROD
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - CES-50-devops-decommissioning
       
 jobs:
   deploy_on_prod:
-    uses: pagopa/dx/.github/workflows/legacy_deploy_pipelines.yaml@workflow-functions-test
-    name: Deploy on PROD
+    uses: pagopa/dx/.github/workflows/legacy_deploy_pipelines.yaml@main
     secrets: inherit
     with:
       environment: 'prod'
